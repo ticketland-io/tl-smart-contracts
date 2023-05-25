@@ -1,5 +1,5 @@
 module ticketland::event {
-  use sui::object::{Self, UID};
+  use sui::object::{Self, UID, ID};
   use sui::tx_context::{Self, TxContext};
   use std::string::String;
   use sui::transfer::{transfer, share_object};
@@ -22,6 +22,8 @@ module ticketland::event {
 
   struct Event has key {
     id: UID,
+    /// The id of the EventNFT associated with this event
+    event_nft_id: ID,
     /// The event creator
     creator: address,
     /// Total number of issued tickets
@@ -89,6 +91,7 @@ module ticketland::event {
     let creator = tx_context::sender(ctx);
     let event = Event {
       id: object::new(ctx),
+      event_nft_id: object::uid_to_inner(&event_nft.id),
       creator, 
       n_tickets,
       start_time,
