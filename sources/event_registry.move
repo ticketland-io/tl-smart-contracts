@@ -3,7 +3,7 @@ module ticketland::event_registry {
   use sui::object::{Self, UID};
   use sui::event;
   use sui::transfer::{transfer, share_object};
-  // use ticketland::constants::{MAX_PROTOCOL_FEE};
+  use ticketland::event as tl_event;
 
   /// Capability allowing the bearer to execute admin related tasks
   struct AdminCap has key {id: UID}
@@ -53,6 +53,16 @@ module ticketland::event_registry {
     config.protocol_fee_address = protocol_fee_address;
 
     event::emit(ConfigUpdated {});
+  }
+
+  public(friend) entry fun create_event(
+    n_tickets: u32,
+    start_time: u64,
+    end_time: u64,
+    available_tickets: u32,
+    ctx: &mut TxContext
+  ) {
+    tl_event::create_event(n_tickets, start_time, end_time, available_tickets, ctx);
   }
 
   #[test_only]

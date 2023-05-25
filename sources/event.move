@@ -1,7 +1,8 @@
 module ticketland::event {
   use sui::object::{Self, UID};
-  use sui::tx_context::{TxContext};
+  use sui::tx_context::{Self, TxContext};
   use std::string::String;
+  use sui::transfer::{transfer};
 
   friend ticketland::event_registry;
 
@@ -55,14 +56,13 @@ module ticketland::event {
     }
   }
 
-  /// Allows anyone to create a new event
   public(friend) fun create_event(
     n_tickets: u32,
     start_time: u64,
     end_time: u64,
     available_tickets: u32,
     ctx: &mut TxContext
-  ): Event {
+  ) {
     let event = Event {
       id: object::new(ctx),
       n_tickets,
@@ -73,6 +73,6 @@ module ticketland::event {
       ticket_types: vector[],
     };
 
-    event
+    transfer(event, tx_context::sender(ctx));
   }
 }
