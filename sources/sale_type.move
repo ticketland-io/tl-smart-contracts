@@ -13,9 +13,9 @@ module ticketland::sale_type {
 
   struct EnglishAuction {
     /// starting price of the auction
-    start_price: u256
+    start_price: u256,
     /// minimum bid increment
-    min_bid: u256
+    min_bid: u256,
   }
 
   struct DutchAuction {

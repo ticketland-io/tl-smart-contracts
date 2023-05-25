@@ -1,7 +1,23 @@
 module ticketland::event {
+  use sui::tx_context::{Self, TxContext};
   use sui::object::{Self, UID};
+  use sui::transfer::{transfer};
+  use std::type_name::TypeName;
 
-  struct Event {
+  /// Capability allowing the bearer to execute admin related tasks
+  struct AdminCap has key {id: UID}
+
+  struct Config has key {
+    id: UID,
+    /// The list of supported coins that can be used in purchases
+    supported_coins: vector<TypeName>,
+    /// The fees collected by the protocol during various interaction i.e. primary sale, secondary etc.
+    protocol_fee: u64,
+    /// The address that will be receiving those fees
+    protocol_fee_address: address,
+  }
+
+  struct Event has key {
     id: UID,
     /// Total number of issued tickets
     n_tickets: u32,
@@ -15,7 +31,7 @@ module ticketland::event {
     ticket_types: vector<TicketType>,
   }
 
-  struct EventCapacity {
+  struct EventCapacity has store {
     /// Number of tickets still available for sale
     available_tickets: u32,
 
@@ -28,7 +44,7 @@ module ticketland::event {
 
   /// Thhe ticket type. Note this struct will have SaleType attached as a dynamic field. This is so we can support
   /// hetergenous sale type values. We could also use Bag (which uses dynamic fields under the hood as well)
-  struct TicketType {
+  struct TicketType has store, drop {
     /// The name of the ticket type
     name: vector<u8>,
     /// The merkle tree root of the seats list
@@ -42,5 +58,14 @@ module ticketland::event {
     /// The range of the seats in the venue this ticket type is for
     /// This vector inludes two items
     seat_range: vector<u32>,
+  }
+
+  /// Module initializer to be executed when this module is published by the the Sui runtime
+  fun init (ctx: &mut TxContext) {
+    let admin_cap = AdminCap {
+      id: object::new(ctx),
+    };
+
+    transfer(admin_cap, tx_context::sender(ctx));
   }
 }
