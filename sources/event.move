@@ -3,7 +3,9 @@ module ticketland::event {
   use sui::tx_context::{Self, TxContext};
   use std::string::String;
   use sui::transfer::{transfer, share_object};
+  use sui::dynamic_field as dfield;
   use std::vector;
+  use ticketland::sale_type::{create_free};
 
   friend ticketland::event_registry;
 
@@ -54,7 +56,8 @@ module ticketland::event {
 
   /// Thhe ticket type. Note this struct will have SaleType attached as a dynamic field. This is so we can support
   /// hetergenous sale type values. We could also use Bag (which uses dynamic fields under the hood as well)
-  struct TicketType has store, copy, drop {
+  struct TicketType has store {
+    id: UID,
     /// The name of the ticket type
     name: String,
     /// The merkle tree root of the seats list
@@ -124,7 +127,7 @@ module ticketland::event {
     seat_ranges: vector<vector<u32>>,
     event: &mut Event,
     _cap: &OrganizerCap,
-    _ctx: &mut TxContext
+    ctx: &mut TxContext
   ) {
     assert!(vector::length(&event.ticket_types) == 0, E_TICKET_TYPE_SET);
 
@@ -145,6 +148,7 @@ module ticketland::event {
       let n_tickets = *vector::borrow(&n_tickets_list, i);
 
       vector::push_back(&mut event.ticket_types, TicketType {
+        id: object::new(ctx),
         name,
         mt_root,
         n_tickets,
@@ -165,5 +169,6 @@ module ticketland::event {
     _cap: &OrganizerCap,
   ) {
     let ticket_type = vector::borrow_mut(&mut event.ticket_types, ticket_type_index);
+    dfield::add(&mut ticket_type.id, b"sale_type", create_free());
   }
 }
