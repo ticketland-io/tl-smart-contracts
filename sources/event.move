@@ -4,6 +4,7 @@ module ticketland::event {
   use std::string::String;
   use sui::transfer::{transfer};
   use std::vector;
+  use sui::vec_map::{VecMap};
 
   friend ticketland::event_registry;
 
@@ -11,6 +12,13 @@ module ticketland::event {
   const E_SEAT_RANGE: u64 = 1;
   const E_MT_ROOT: u64 = 3;
   const E_TICKET_TYPE_SET: u64 = 3;
+
+  struct EventNft has key {
+    id: UID,
+    name: String,
+    image_url: String,
+    properties: VecMap<String, String>
+  }
 
   struct Event has key {
     id: UID,
