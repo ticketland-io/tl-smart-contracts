@@ -2,6 +2,7 @@ module ticketland::event {
   use sui::object::{Self, UID, ID};
   use sui::tx_context::{Self, TxContext};
   use std::string::String;
+  use sui::clock::{Self, Clock};
   use sui::transfer::{transfer, share_object};
   use sui::dynamic_field as dfield;
   use std::vector;
@@ -170,7 +171,8 @@ module ticketland::event {
   }
 
   // We're not allowed to change the ticket type once it's set
-  fun assert_sale_type_not_set(ticket_type: &mut TicketType) {
+  fun assert_add_sale_type(start_time: u64, ticket_type: &TicketType, clock: &Clock) {
+    assert!(clock::timestamp_ms(clock) < start_time, E_SALE_TYPE_SET);
     assert!(!dfield::exists_(&ticket_type.id, SALE_TYPE_KEY), E_SALE_TYPE_SET);
   }
 
@@ -179,10 +181,11 @@ module ticketland::event {
   public entry fun add_free_sale_type(
     event: &mut Event,
     ticket_type_index: u64,
+    clock: &Clock,
     _cap: &OrganizerCap,
   ) {
     let ticket_type = vector::borrow_mut(&mut event.ticket_types, ticket_type_index);
-    assert_sale_type_not_set(ticket_type);
+    assert_add_sale_type(event.start_time, ticket_type, clock);
     dfield::add(&mut ticket_type.id, SALE_TYPE_KEY, create_free());
   }
 
@@ -192,10 +195,11 @@ module ticketland::event {
     event: &mut Event,
     ticket_type_index: u64,
     amount: u256,
+    clock: &Clock,
     _cap: &OrganizerCap,
   ) {
     let ticket_type = vector::borrow_mut(&mut event.ticket_types, ticket_type_index);
-    assert_sale_type_not_set(ticket_type);
+    assert_add_sale_type(event.start_time, ticket_type, clock);
     dfield::add(&mut ticket_type.id, SALE_TYPE_KEY, create_fixed_price(amount));
   }
 }
