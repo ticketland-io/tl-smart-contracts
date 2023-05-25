@@ -56,14 +56,19 @@ module ticketland::event_registry {
   }
 
   /// Allows anyone to create a new event
+  /// 
+  /// # Arguments
+  /// 
+  /// * `n_tickets` - Total number of tickets
+  /// * `start_time` - Start of the event
+  /// * `end_time` - End time of the event
   public(friend) entry fun create_event(
     n_tickets: u32,
     start_time: u64,
     end_time: u64,
-    available_tickets: u32,
     ctx: &mut TxContext
   ) {
-    tl_event::create_event(n_tickets, start_time, end_time, available_tickets, ctx);
+    tl_event::create_event(n_tickets, start_time, end_time, ctx);
   }
 
   #[test_only]

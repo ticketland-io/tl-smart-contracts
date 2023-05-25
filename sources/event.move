@@ -60,7 +60,6 @@ module ticketland::event {
     n_tickets: u32,
     start_time: u64,
     end_time: u64,
-    available_tickets: u32,
     ctx: &mut TxContext
   ) {
     let event = Event {
@@ -68,7 +67,7 @@ module ticketland::event {
       n_tickets,
       start_time,
       end_time,
-      event_capacity: create_event_capacity(available_tickets),
+      event_capacity: create_event_capacity(n_tickets),
       // TODO: create ticket types
       ticket_types: vector[],
     };
