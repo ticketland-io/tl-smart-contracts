@@ -20,6 +20,9 @@ module ticketland::event {
     image_uri: String,
   }
 
+  // Cap that allow the bearer to manage events. It has store ability because we want free native transfers on this object
+  struct OrganizerCap has key, store { id: UID }
+
   struct Event has key {
     id: UID,
     /// The id of the EventNFT associated with this event
@@ -101,13 +104,17 @@ module ticketland::event {
       ticket_types: vector[],
     };
 
+    let organizer_cap = OrganizerCap {id: object::new(ctx)};
+
     // Event is shared as it will be immutably used in other function call by other users
     share_object(event);
     // However, the Event NFT itself is owned by the creator
     transfer(event_nft, creator);
+    // Create and transfer the organizer cap as well so the event creator can manage events
+    transfer(organizer_cap, creator)
   }
 
-  /// Allows the owner of the given Event to add multiple tickets types. It can only be called once per event
+  /// Allows the bearer of the organizer cap to add the given ticket types to the event. It can only be called once per event
   public entry fun add_ticket_types(
     names: vector<String>,
     mt_roots: vector<vector<u8>>,
@@ -116,6 +123,7 @@ module ticketland::event {
     sale_end_times: vector<u64>,
     seat_ranges: vector<vector<u32>>,
     event: &mut Event,
+    _cap: &OrganizerCap,
     _ctx: &mut TxContext
   ) {
     assert!(vector::length(&event.ticket_types) == 0, E_TICKET_TYPE_SET);

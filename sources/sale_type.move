@@ -1,4 +1,6 @@
 module ticketland::sale_type {
+  use ticketland::event::{Event};
+
   struct Free {}
   
   struct FixedPrice {
@@ -23,5 +25,9 @@ module ticketland::sale_type {
     end_price: u256,
     curve_length: u16,
     drop_interval: u16,
+  }
+
+  public entry fun add_sale_type(event: &mut Event) {
+
   }
 }
