@@ -2,9 +2,8 @@ module ticketland::event {
   use sui::object::{Self, UID};
   use sui::tx_context::{Self, TxContext};
   use std::string::String;
-  use sui::transfer::{transfer};
+  use sui::transfer::{transfer, share_object};
   use std::vector;
-  use sui::vec_map::{VecMap};
 
   friend ticketland::event_registry;
 
@@ -13,15 +12,18 @@ module ticketland::event {
   const E_MT_ROOT: u64 = 3;
   const E_TICKET_TYPE_SET: u64 = 3;
 
-  struct EventNft has key {
+  struct EventNFT has key {
     id: UID,
+    /// The name of the NFT
     name: String,
-    image_url: String,
-    properties: VecMap<String, String>
+    /// The image uri
+    image_uri: String,
   }
 
   struct Event has key {
     id: UID,
+    /// The event creator
+    creator: address,
     /// Total number of issued tickets
     n_tickets: u32,
     /// Start of the event
@@ -71,13 +73,23 @@ module ticketland::event {
   }
 
   public(friend) fun create_event(
+    name: String,
+    image_uri: String,
     n_tickets: u32,
     start_time: u64,
     end_time: u64,
     ctx: &mut TxContext
   ) {
+    let event_nft = EventNFT {
+      id: object::new(ctx),
+      name,
+      image_uri,
+    };
+
+    let creator = tx_context::sender(ctx);
     let event = Event {
       id: object::new(ctx),
+      creator, 
       n_tickets,
       start_time,
       end_time,
@@ -85,7 +97,10 @@ module ticketland::event {
       ticket_types: vector[],
     };
 
-    transfer(event, tx_context::sender(ctx));
+    // Event is shared as it will be immutably used in other function call by other users
+    // However, the Event NFT itself is owned by the creator
+    share_object(event);
+    transfer(event_nft, creator);
   }
 
   /// Allows the owner of the given Event to add multiple tickets types. It can only be called once per event

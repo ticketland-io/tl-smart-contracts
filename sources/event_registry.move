@@ -1,6 +1,7 @@
 module ticketland::event_registry {
   use sui::tx_context::{Self, TxContext};
   use sui::object::{Self, UID};
+  use std::string::String;
   use sui::event;
   use sui::transfer::{transfer, share_object};
   use ticketland::event as tl_event;
@@ -63,12 +64,14 @@ module ticketland::event_registry {
   /// * `start_time` - Start of the event
   /// * `end_time` - End time of the event
   public(friend) entry fun create_event(
+    name: String,
+    image_uri: String,
     n_tickets: u32,
     start_time: u64,
     end_time: u64,
     ctx: &mut TxContext
   ) {
-    tl_event::create_event(n_tickets, start_time, end_time, ctx);
+    tl_event::create_event(name, image_uri, n_tickets, start_time, end_time, ctx);
   }
 
   #[test_only]
