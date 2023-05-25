@@ -6,12 +6,9 @@ module ticketland::event {
   use sui::transfer::{transfer, share_object};
   use sui::dynamic_field as dfield;
   use std::vector;
-  use ticketland::sale_type::{
-    create_free, create_fixed_price, create_refundable, create_english_auction, 
-    create_dutch_auction,
-  };
 
   friend ticketland::event_registry;
+  friend ticketland::sale_type;
 
   /// constants
   const SALE_TYPE_KEY: vector<u8> = b"sale_type";
@@ -176,30 +173,14 @@ module ticketland::event {
     assert!(!dfield::exists_(&ticket_type.id, SALE_TYPE_KEY), E_SALE_TYPE_SET);
   }
 
-  /// Allows event organizer to add a free sale type. SaleTypes are added as synamic fields to allow heterogeneous values
-  /// to be stored on the event's ticket types
-  public entry fun add_free_sale_type(
+  public(friend) fun add_sale_type<ST: store + drop>(
+    sale_type: ST,
     event: &mut Event,
     ticket_type_index: u64,
-    clock: &Clock,
-    _cap: &OrganizerCap,
+    clock: &Clock
   ) {
     let ticket_type = vector::borrow_mut(&mut event.ticket_types, ticket_type_index);
     assert_add_sale_type(event.start_time, ticket_type, clock);
-    dfield::add(&mut ticket_type.id, SALE_TYPE_KEY, create_free());
-  }
-
-  /// Allows event organizer to add a fixed price sale type. SaleTypes are added as synamic fields to allow heterogeneous values
-  /// to be stored on the event's ticket types
-  public entry fun add_fixed_price_sale_type(
-    event: &mut Event,
-    ticket_type_index: u64,
-    amount: u256,
-    clock: &Clock,
-    _cap: &OrganizerCap,
-  ) {
-    let ticket_type = vector::borrow_mut(&mut event.ticket_types, ticket_type_index);
-    assert_add_sale_type(event.start_time, ticket_type, clock);
-    dfield::add(&mut ticket_type.id, SALE_TYPE_KEY, create_fixed_price(amount));
+    dfield::add<vector<u8>, ST>(&mut ticket_type.id, SALE_TYPE_KEY, sale_type);
   }
 }

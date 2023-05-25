@@ -1,8 +1,6 @@
 module ticketland::sale_type {
   struct Free has store {}
   
-  friend ticketland::event;
-
   struct FixedPrice has store {
     /// The actual price
     amount: u256,
@@ -43,7 +41,6 @@ module ticketland::sale_type {
     EnglishAuction {start_price, min_bid}
   }
 
-
   public(friend) fun create_dutch_auction(
     start_price: u256,
     end_price: u256,
@@ -52,4 +49,15 @@ module ticketland::sale_type {
     ): DutchAuction {
     DutchAuction {start_price, end_price, curve_length, drop_interval}
   }
+
+  // public entry fun add_free_sale_type(
+  //   event: &mut Event,
+  //   ticket_type_index: u64,
+  //   clock: &Clock,
+  //   _cap: &OrganizerCap,
+  // ) {
+  //   let ticket_type = vector::borrow_mut(&mut event.ticket_types, ticket_type_index);
+  //   assert_add_sale_type(event.start_time, ticket_type, clock);
+  //   dfield::add(&mut ticket_type.id, SALE_TYPE_KEY, create_free());
+  // }
 }
