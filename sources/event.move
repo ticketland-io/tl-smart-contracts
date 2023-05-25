@@ -1,4 +1,4 @@
-module ticketland::event_registry {
+module ticketland::event {
   use sui::object::{Self, UID};
 
   struct Event {
