@@ -2,6 +2,7 @@ module ticketland::event_registry {
   use sui::tx_context::{Self, TxContext};
   use sui::object::{Self, UID};
   use std::string::String;
+  use sui::event;
   use sui::transfer::{transfer, share_object};
   // use ticketland::constants::{MAX_PROTOCOL_FEE};
 
@@ -62,6 +63,9 @@ module ticketland::event_registry {
     seat_range: vector<u32>,
   }
 
+  // Events
+  struct ConfigUpdated has copy, drop {}
+
   /// Module initializer to be executed when this module is published by the the Sui runtime
   fun init (ctx: &mut TxContext) {
     let admin_cap = AdminCap {
@@ -91,6 +95,8 @@ module ticketland::event_registry {
     config.supported_coins = supported_coins;
     config.protocol_fee = protocol_fee;
     config.protocol_fee_address = protocol_fee_address;
+
+    event::emit(ConfigUpdated {});
   }
 
   #[test_only]
