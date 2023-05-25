@@ -38,7 +38,7 @@ module ticketland::event {
 
   /// Thhe ticket type. Note this struct will have SaleType attached as a dynamic field. This is so we can support
   /// hetergenous sale type values. We could also use Bag (which uses dynamic fields under the hood as well)
-  struct TicketType has store, drop {
+  struct TicketType has store, copy, drop {
     /// The name of the ticket type
     name: String,
     /// The merkle tree root of the seats list
@@ -79,27 +79,42 @@ module ticketland::event {
     transfer(event, tx_context::sender(ctx));
   }
 
-  public entry fun add_ticket_type(
-    name: String,
-    mt_root: vector<u8>,
-    n_tickets: u32,
-    sale_start_time: u64,
-    sale_end_time: u64,
-    seat_range: vector<u32>,
+  public entry fun add_ticket_types(
+    names: vector<String>,
+    mt_roots: vector<vector<u8>>,
+    n_tickets_list: vector<u32>,
+    sale_start_times: vector<u64>,
+    sale_end_times: vector<u64>,
+    seat_ranges: vector<vector<u32>>,
     event: &mut Event,
     _ctx: &mut TxContext
   ) {
-    assert!(sale_start_time < sale_end_time, E_START_TIME_BEFORE_END);
-    assert!(vector::length(&mt_root) == 32, E_MT_ROOT);
-    assert!(vector::length(&seat_range) == 2, E_MT_ROOT);
+    let i = 0;
+    let len = vector::length(&names);
 
-    vector::push_back(&mut event.ticket_types, TicketType {
-      name,
-      mt_root,
-      n_tickets,
-      sale_start_time,
-      sale_end_time,
-      seat_range
-    });
+    while(i < len) {
+      let sale_start_time = *vector::borrow(&sale_start_times, i);
+      let sale_end_time = *vector::borrow(&sale_end_times, i);
+      let mt_root = *vector::borrow(&mt_roots, i);
+      let seat_range = *vector::borrow(&seat_ranges, i);
+
+      assert!(sale_start_time < sale_end_time, E_START_TIME_BEFORE_END);
+      assert!(vector::length(&mt_root) == 32, E_MT_ROOT);
+      assert!(vector::length(&seat_range) == 2, E_MT_ROOT);
+
+      let name = *vector::borrow(&names, i);
+      let n_tickets = *vector::borrow(&n_tickets_list, i);
+
+      vector::push_back(&mut event.ticket_types, TicketType {
+        name,
+        mt_root,
+        n_tickets,
+        sale_start_time,
+        sale_end_time,
+        seat_range
+      });
+
+      i = i + 1;
+    };
   }
 }
