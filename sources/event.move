@@ -1,8 +1,13 @@
 module ticketland::event {
   use sui::tx_context::{Self, TxContext};
   use sui::object::{Self, UID};
-  use sui::transfer::{transfer};
+  use sui::transfer::{transfer, public_transfer};
   use std::type_name::TypeName;
+  
+  use std::debug;
+  use sui::coin::{Coin};
+
+  // use ticketland::constants::{MAX_PROTOCOL_FEE};
 
   /// Capability allowing the bearer to execute admin related tasks
   struct AdminCap has key {id: UID}
@@ -68,4 +73,17 @@ module ticketland::event {
 
     transfer(admin_cap, tx_context::sender(ctx));
   }
+
+  /// Allows admin to update the configs
+  public entry fun update_config<T>(coins: Coin<T>, ctx: &mut TxContext) {
+    debug::print<Coin<T>>(&coins);
+    public_transfer(coins, tx_context::sender(ctx));
+  }
+  // public entry fun update_config(
+  //   _cap: AdminCap,
+
+  //   ctx: &mut TxContext
+  // ) {
+
+  // }
 }
