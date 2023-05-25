@@ -1,12 +1,8 @@
-module ticketland::event {
+module ticketland::event_registry {
   use sui::tx_context::{Self, TxContext};
   use sui::object::{Self, UID};
-  use sui::transfer::{transfer, public_transfer};
-  use std::type_name::TypeName;
-  
-  use std::debug;
-  use sui::coin::{Coin};
-
+  use std::string::String;
+  use sui::transfer::{transfer, share_object};
   // use ticketland::constants::{MAX_PROTOCOL_FEE};
 
   /// Capability allowing the bearer to execute admin related tasks
@@ -14,8 +10,9 @@ module ticketland::event {
 
   struct Config has key {
     id: UID,
-    /// The list of supported coins that can be used in purchases
-    supported_coins: vector<TypeName>,
+    /// The list of supported coins that can be used in purchases. These are the addresses (taken from UID::ID::address)
+    /// of th CoinMetadata objects related with each currency. CoinMetadata is unique for each Coin
+    supported_coins: vector<address>,
     /// The fees collected by the protocol during various interaction i.e. primary sale, secondary etc.
     protocol_fee: u64,
     /// The address that will be receiving those fees
@@ -51,7 +48,7 @@ module ticketland::event {
   /// hetergenous sale type values. We could also use Bag (which uses dynamic fields under the hood as well)
   struct TicketType has store, drop {
     /// The name of the ticket type
-    name: vector<u8>,
+    name: String,
     /// The merkle tree root of the seats list
     mt_root: vector<u8>,
     /// Total number of issued tickets
@@ -71,19 +68,34 @@ module ticketland::event {
       id: object::new(ctx),
     };
 
+    let config = Config {
+      id: object::new(ctx), 
+      supported_coins: vector[],
+      protocol_fee: 0,
+      protocol_fee_address: tx_context::sender(ctx),
+    };
+
     transfer(admin_cap, tx_context::sender(ctx));
+    share_object(config);
   }
 
   /// Allows admin to update the configs
-  public entry fun update_config<T>(coins: Coin<T>, ctx: &mut TxContext) {
-    debug::print<Coin<T>>(&coins);
-    public_transfer(coins, tx_context::sender(ctx));
+  public entry fun update_config(
+    _cap: &AdminCap,
+    config: &mut Config,
+    supported_coins: vector<address>,
+    protocol_fee: u64,
+    protocol_fee_address: address,
+    _ctx: &mut TxContext
+  ) {
+    config.supported_coins = supported_coins;
+    config.protocol_fee = protocol_fee;
+    config.protocol_fee_address = protocol_fee_address;
   }
-  // public entry fun update_config(
-  //   _cap: AdminCap,
 
-  //   ctx: &mut TxContext
-  // ) {
-
-  // }
+  #[test_only]
+  /// Wrapper of module initializer for testing
+  public fun test_init(ctx: &mut TxContext) {
+    init(ctx)
+  }
 }

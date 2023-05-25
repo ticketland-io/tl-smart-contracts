@@ -4,6 +4,7 @@ version = "0.0.1"
 
 [dependencies]
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet" }
+# Sui = { local = "../../apocentre/sui/sui/crates/sui-framework/packages/sui-framework" }
 
 [addresses]
 ticketland =  "0x48533480c1ee2d10dd8888c0650cd59db577b1298cec7fa52261ad41d18567af"
