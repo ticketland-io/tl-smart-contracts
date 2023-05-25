@@ -3,8 +3,13 @@ module ticketland::event {
   use sui::tx_context::{Self, TxContext};
   use std::string::String;
   use sui::transfer::{transfer};
+  use std::vector;
 
   friend ticketland::event_registry;
+
+  const E_START_TIME_BEFORE_END: u64 = 0;
+  const E_SEAT_RANGE: u64 = 1;
+  const E_MT_ROOT: u64 = 3;
 
   struct Event has key {
     id: UID,
@@ -68,10 +73,33 @@ module ticketland::event {
       start_time,
       end_time,
       event_capacity: create_event_capacity(n_tickets),
-      // TODO: create ticket types
       ticket_types: vector[],
     };
 
     transfer(event, tx_context::sender(ctx));
+  }
+
+  public entry fun add_ticket_type(
+    name: String,
+    mt_root: vector<u8>,
+    n_tickets: u32,
+    sale_start_time: u64,
+    sale_end_time: u64,
+    seat_range: vector<u32>,
+    event: &mut Event,
+    _ctx: &mut TxContext
+  ) {
+    assert!(sale_start_time < sale_end_time, E_START_TIME_BEFORE_END);
+    assert!(vector::length(&mt_root) == 32, E_MT_ROOT);
+    assert!(vector::length(&seat_range) == 2, E_MT_ROOT);
+
+    vector::push_back(&mut event.ticket_types, TicketType {
+      name,
+      mt_root,
+      n_tickets,
+      sale_start_time,
+      sale_end_time,
+      seat_range
+    });
   }
 }
