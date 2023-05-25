@@ -10,6 +10,7 @@ module ticketland::event {
   const E_START_TIME_BEFORE_END: u64 = 0;
   const E_SEAT_RANGE: u64 = 1;
   const E_MT_ROOT: u64 = 3;
+  const E_TICKET_TYPE_SET: u64 = 3;
 
   struct Event has key {
     id: UID,
@@ -79,6 +80,7 @@ module ticketland::event {
     transfer(event, tx_context::sender(ctx));
   }
 
+  /// Allows the owner of the given Event to add multiple tickets types. It can only be called once per event
   public entry fun add_ticket_types(
     names: vector<String>,
     mt_roots: vector<vector<u8>>,
@@ -89,6 +91,8 @@ module ticketland::event {
     event: &mut Event,
     _ctx: &mut TxContext
   ) {
+    assert!(vector::length(&event.ticket_types) == 0, E_TICKET_TYPE_SET);
+
     let i = 0;
     let len = vector::length(&names);
 
