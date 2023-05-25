@@ -74,6 +74,7 @@ module ticketland::event {
     }
   }
 
+  /// Create a new shared Event object and the onwed by the event creator EventNFT object
   public(friend) fun create_event(
     name: String,
     image_uri: String,
@@ -101,8 +102,8 @@ module ticketland::event {
     };
 
     // Event is shared as it will be immutably used in other function call by other users
-    // However, the Event NFT itself is owned by the creator
     share_object(event);
+    // However, the Event NFT itself is owned by the creator
     transfer(event_nft, creator);
   }
 
