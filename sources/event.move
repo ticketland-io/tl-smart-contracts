@@ -156,4 +156,14 @@ module ticketland::event {
       i = i + 1;
     };
   }
+
+  /// Allows event organizer to add a free sale type. SaleTypes are added as synamic fields to allow heterogeneous values
+  /// to be stored on the event's ticket types
+  public entry fun add_free_sale_type(
+    event: &mut Event,
+    ticket_type_index: u64,
+    _cap: &OrganizerCap,
+  ) {
+    let ticket_type = vector::borrow_mut(&mut event.ticket_types, ticket_type_index);
+  }
 }

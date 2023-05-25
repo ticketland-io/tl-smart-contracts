@@ -1,8 +1,8 @@
 module ticketland::sale_type {
-  use ticketland::event::{Event};
-
   struct Free {}
   
+  friend ticketland::event;
+
   struct FixedPrice {
     /// The actual price
     amount: u256,
@@ -27,7 +27,29 @@ module ticketland::sale_type {
     drop_interval: u16,
   }
 
-  public entry fun add_sale_type(event: &mut Event) {
+  public(friend) fun CreateFree(): Free {
+    Free {}
+  }
 
+  public(friend) fun CreateFixedPrice(amount: u256): FixedPrice {
+    FixedPrice {amount}
+  }
+
+  public(friend) fun CreateRefundable(amount: u256): Refundable {
+    Refundable {amount}
+  }
+
+  public(friend) fun CreateEnglishAuction(start_price: u256, min_bid: u256): EnglishAuction {
+    EnglishAuction {start_price, min_bid}
+  }
+
+
+  public(friend) fun CreateDutchAuction(
+    start_price: u256,
+    end_price: u256,
+    curve_length: u16,
+    drop_interval: u16,
+    ): DutchAuction {
+    DutchAuction {start_price, end_price, curve_length, drop_interval}
   }
 }
