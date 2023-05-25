@@ -173,7 +173,10 @@ module ticketland::event {
     assert!(!dfield::exists_(&ticket_type.id, SALE_TYPE_KEY), E_SALE_TYPE_SET);
   }
 
-  public(friend) fun add_sale_type<ST: store + drop>(
+  /// Called by the sale type module to add the given generic sale type as a dynamic field of TicketType
+  /// object. We use dynamic fields to support heterogeneous struct type which is not possible with a VecMap.
+  /// Note we could also use Bag which uses dynamic fields under the hood anyways.
+  public(friend) fun add_sale_type<ST: store>(
     sale_type: ST,
     event: &mut Event,
     ticket_type_index: u64,
