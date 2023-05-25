@@ -35,7 +35,7 @@ module ticketland::sale_type {
     FixedPrice {amount}
   }
 
-  public(friend) fun Create_refundable(amount: u256): Refundable {
+  public(friend) fun create_refundable(amount: u256): Refundable {
     Refundable {amount}
   }
 

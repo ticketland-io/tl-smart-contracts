@@ -5,14 +5,22 @@ module ticketland::event {
   use sui::transfer::{transfer, share_object};
   use sui::dynamic_field as dfield;
   use std::vector;
-  use ticketland::sale_type::{create_free};
+  use ticketland::sale_type::{
+    create_free, create_fixed_price, create_refundable, create_english_auction, 
+    create_dutch_auction,
+  };
 
   friend ticketland::event_registry;
 
+  /// constants
+  const SALE_TYPE_KEY: vector<u8> = b"sale_type";
+
+  /// Errors
   const E_START_TIME_BEFORE_END: u64 = 0;
   const E_SEAT_RANGE: u64 = 1;
-  const E_MT_ROOT: u64 = 3;
+  const E_MT_ROOT: u64 = 2;
   const E_TICKET_TYPE_SET: u64 = 3;
+  const E_SALE_TYPE_SET: u64 = 4;
 
   struct EventNFT has key {
     id: UID,
@@ -161,6 +169,11 @@ module ticketland::event {
     };
   }
 
+  // We're not allowed to change the ticket type once it's set
+  fun assert_sale_type_not_set(ticket_type: &mut TicketType) {
+    assert!(!dfield::exists_(&ticket_type.id, SALE_TYPE_KEY), E_SALE_TYPE_SET);
+  }
+
   /// Allows event organizer to add a free sale type. SaleTypes are added as synamic fields to allow heterogeneous values
   /// to be stored on the event's ticket types
   public entry fun add_free_sale_type(
@@ -169,6 +182,20 @@ module ticketland::event {
     _cap: &OrganizerCap,
   ) {
     let ticket_type = vector::borrow_mut(&mut event.ticket_types, ticket_type_index);
-    dfield::add(&mut ticket_type.id, b"sale_type", create_free());
+    assert_sale_type_not_set(ticket_type);
+    dfield::add(&mut ticket_type.id, SALE_TYPE_KEY, create_free());
+  }
+
+  /// Allows event organizer to add a fixed price sale type. SaleTypes are added as synamic fields to allow heterogeneous values
+  /// to be stored on the event's ticket types
+  public entry fun add_fixed_price_sale_type(
+    event: &mut Event,
+    ticket_type_index: u64,
+    amount: u256,
+    _cap: &OrganizerCap,
+  ) {
+    let ticket_type = vector::borrow_mut(&mut event.ticket_types, ticket_type_index);
+    assert_sale_type_not_set(ticket_type);
+    dfield::add(&mut ticket_type.id, SALE_TYPE_KEY, create_fixed_price(amount));
   }
 }
