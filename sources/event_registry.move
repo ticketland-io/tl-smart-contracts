@@ -55,6 +55,7 @@ module ticketland::event_registry {
     event::emit(ConfigUpdated {});
   }
 
+  /// Allows anyone to create a new event
   public(friend) entry fun create_event(
     n_tickets: u32,
     start_time: u64,
