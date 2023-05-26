@@ -7,6 +7,7 @@ module ticketland::event {
   use sui::transfer::{transfer, share_object};
   use sui::dynamic_field as dfield;
   use std::vector;
+  use sui::vec_map::{Self, VecMap};
 
   friend ticketland::event_registry;
   friend ticketland::sale_type;
@@ -27,6 +28,8 @@ module ticketland::event {
     name: String,
     /// The image uri
     image_uri: String,
+    /// Custom metadata attributes
+    properties: VecMap<String, String>
   }
 
   // Cap that allow the bearer to manage events. It has store ability because we want free native transfers on this object
@@ -111,6 +114,10 @@ module ticketland::event {
       id: object::new(ctx),
       name,
       image_uri,
+      // We add this to make it future proof. We might want to add additional custom metadata
+      // attributes to each event NFT in the future. So to make module upgrades compatible, we
+      // want to have this field in the struct
+      properties: vec_map::empty(),
     };
 
     let creator = tx_context::sender(ctx);
@@ -136,7 +143,7 @@ module ticketland::event {
       id: object::uid_to_inner(&event_nft.id),
       creator,
     });
-    
+
     // Event is shared as it will be immutably used in other function call by other users
     share_object(event);
     // However, the Event NFT itself is owned by the creator
