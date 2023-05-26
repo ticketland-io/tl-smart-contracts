@@ -1,5 +1,5 @@
 module ticketland::event_registry {
-  use sui::tx_context::{Self, TxContext};
+  use sui::tx_context::{TxContext, sender};
   use sui::object::{Self, UID};
   use std::string::String;
   use sui::event;
@@ -33,10 +33,10 @@ module ticketland::event_registry {
       id: object::new(ctx), 
       supported_coins: vector[],
       protocol_fee: 0,
-      protocol_fee_address: tx_context::sender(ctx),
+      protocol_fee_address: sender(ctx),
     };
 
-    transfer(admin_cap, tx_context::sender(ctx));
+    transfer(admin_cap, sender(ctx));
     share_object(config);
   }
 
@@ -64,14 +64,25 @@ module ticketland::event_registry {
   /// * `start_time` - Start of the event
   /// * `end_time` - End time of the event
   public(friend) entry fun create_event(
+    event_id: String,
     name: String,
+    description: String,
     image_uri: String,
     n_tickets: u32,
     start_time: u64,
     end_time: u64,
     ctx: &mut TxContext
   ) {
-    tl_event::create_event(name, image_uri, n_tickets, start_time, end_time, ctx);
+    tl_event::create_event(
+      event_id,
+      name,
+      description,
+      image_uri,
+      n_tickets,
+      start_time,
+      end_time,
+      ctx,
+    );
   }
 
   #[test_only]

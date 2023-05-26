@@ -1,10 +1,13 @@
 module ticketland::event {
+  use sui::package;
+  use sui::display;
   use sui::object::{Self, UID, ID};
-  use sui::tx_context::{Self, TxContext};
-  use std::string::String;
+  use sui::tx_context::{TxContext, sender};
+  use std::string::{utf8, String};
   use sui::clock::{Self, Clock};
   use sui::event;
-  use sui::transfer::{transfer, share_object};
+  use sui::address;
+  use sui::transfer::{transfer, public_transfer, share_object};
   use sui::dynamic_field as dfield;
   use std::vector;
   use sui::vec_map::{Self, VecMap};
@@ -22,10 +25,15 @@ module ticketland::event {
   const E_TICKET_TYPE_SET: u64 = 3;
   const E_SALE_TYPE_SET: u64 = 4;
 
+  /// One-Time-Witness for the module.
+  struct EVENT has drop {}
+
   struct EventNFT has key {
     id: UID,
     /// The name of the NFT
     name: String,
+    /// The description
+    description: String,
     /// The image uri
     image_uri: String,
     /// Custom metadata attributes
@@ -37,6 +45,8 @@ module ticketland::event {
 
   struct Event has key {
     id: UID,
+    /// Internal off-chain event id
+    event_id: String, 
     /// The id of the EventNFT associated with this event
     event_nft_id: ID,
     /// The event creator
@@ -94,6 +104,34 @@ module ticketland::event {
     creator: address,
   }
 
+  /// Use one-time-witness and publisher patterns to create a new Display Object for the Event and Event NFTs objects
+  /// more details https://examples.sui.io/basics/display.html and https://docs.sui.io/build/sui-object-display
+  fun init(otw: EVENT, ctx: &mut TxContext) {
+    let creator = sender(ctx);
+
+    let event_nft_keys = vector[
+      utf8(b"name"),
+      utf8(b"link"),
+      utf8(b"description"),
+      utf8(b"creator"),
+    ];
+
+    let event_nft_values = vector[
+      utf8(b"{name}"),
+      utf8(b"https://app.ticketland/events/{event_id}"),
+      utf8(b"{description}"),
+      address::to_string(creator),
+    ];
+
+    let publisher = package::claim(otw, ctx);
+    let display = display::new_with_fields<EventNFT>(&publisher, event_nft_keys, event_nft_values, ctx);
+    // Commit first version of `Display` to apply changes.
+    display::update_version(&mut display);
+
+    public_transfer(publisher, sender(ctx));
+    public_transfer(display, sender(ctx));
+  }
+
   fun create_event_capacity(available_tickets: u32): EventCapacity {
     EventCapacity {
       available_tickets,
@@ -103,7 +141,9 @@ module ticketland::event {
 
   /// Create a new shared Event object and the onwed by the event creator EventNFT object
   public(friend) fun create_event(
+    event_id: String,
     name: String,
+    description: String,
     image_uri: String,
     n_tickets: u32,
     start_time: u64,
@@ -113,6 +153,7 @@ module ticketland::event {
     let event_nft = EventNFT {
       id: object::new(ctx),
       name,
+      description,
       image_uri,
       // We add this to make it future proof. We might want to add additional custom metadata
       // attributes to each event NFT in the future. So to make module upgrades compatible, we
@@ -120,9 +161,10 @@ module ticketland::event {
       properties: vec_map::empty(),
     };
 
-    let creator = tx_context::sender(ctx);
+    let creator = sender(ctx);
     let event = Event {
       id: object::new(ctx),
+      event_id,
       event_nft_id: object::uid_to_inner(&event_nft.id),
       creator, 
       n_tickets,
