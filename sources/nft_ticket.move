@@ -14,6 +14,21 @@ module ticketland::nft_ticket {
   /// One-Time-Witness for the module.
   struct NFT_TICKET has drop {}
 
+  struct Config has key {
+    id: UID,
+    // event id => ticket_type_id => NftTicketDetails
+    properties: VecMap<String, VecMap<ID, NftTicketDetails>>,
+  }
+  
+  // A struct that contains the details of each NFT an event organizer issues and which can later be 
+  // claimed by Ticket holders and which will mint and attach a new NftTicket
+  struct NftTicketDetails has store {
+    name: String,
+    description: String,
+    image_uri: String,
+    properties: VecMap<String, String>,
+  }
+
   struct NftTicket has key {
     id: UID,
     /// The name of the NFT
@@ -87,6 +102,7 @@ module ticketland::nft_ticket {
     public_transfer(d2, sender(ctx));
   }
 
+  /// Mints the root Ticket Object
   public(friend) fun mint_ticket(
     event_id: String,
     name: String,
