@@ -8,9 +8,10 @@ module ticketland::primary_market {
   use ticketland::bitmap;
   use ticketland::merkle_tree;
   use ticketland::num_utils::{u64_to_str};
+  use ticketland::nft_ticket::{Self};
   use ticketland::event::{
     Event, get_ticket_type, get_ticket_type_sale_time, get_available_seats, get_seat_range, get_seats,
-    get_ticket_type_mt_root, update_seats, increment_tickets_sold,
+    get_ticket_type_mt_root, update_seats, increment_tickets_sold, get_event_id,
   };
 
   /// Erros
@@ -72,9 +73,28 @@ module ticketland::primary_market {
     increment_tickets_sold(event);
   }
 
+  fun mint_ticket(
+    event: &Event,
+    ticket_type_index: u64,
+    ticket_name: String,
+    seat_index: u64,
+    seat_name: String,
+    ctx: &mut TxContext
+  ) {
+    // let pri
+    // let nft_ticket = nft_ticket::mint_ticket(
+    //   get_event_id(event),
+    //   ticket_name,
+    //   u64_to_str(seat_index),
+    //   seat_name,
+    //   price_sold,
+    // );
+  }
+
   public entry fun free_sale(
     event: &mut Event,
     ticket_type_index: u64,
+    ticket_name: String,
     seat_index: u64,
     seat_name: String,
     proof: vector<vector<u8>>,
@@ -87,6 +107,15 @@ module ticketland::primary_market {
     pre_purchase(event, ticket_type_index, seat_index, seat_name, proof, clock);
 
     // 2. Create a new ticket
+    mint_ticket(
+      event,
+      ticket_type_index,
+      ticket_name,
+      seat_index,
+      seat_name,
+      ctx,
+    );
+
     // 3. post-purchase updates
     post_purchase(event, seat_index)
 

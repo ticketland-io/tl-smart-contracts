@@ -141,8 +141,8 @@ module ticketland::event {
     // Commit first version of `Display` to apply changes.
     display::update_version(&mut display);
 
-    public_transfer(publisher, sender(ctx));
-    public_transfer(display, sender(ctx));
+    public_transfer(publisher, creator);
+    public_transfer(display, creator);
   }
 
   fun create_event_capacity(): EventCapacity {
@@ -277,6 +277,10 @@ module ticketland::event {
     let ticket_type = vector::borrow_mut(&mut event.ticket_types, ticket_type_index);
     assert_add_sale_type(event.start_time, ticket_type, clock);
     dfield::add<vector<u8>, ST>(&mut ticket_type.id, SALE_TYPE_KEY, sale_type);
+  }
+
+  public fun get_event_id(event: &Event): String {
+    event.event_id
   }
 
   public fun get_available_seats(event: &Event): u32 {
