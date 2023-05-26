@@ -1,9 +1,10 @@
 module ticketland::primary_market {
-  use sui::object::{Self, UID, ID};
+  use sui::object::{Self, UID, ID, uid_to_inner};
   use std::vector;
   use sui::clock::{Self, Clock};
-  use sui::tx_context::{TxContext};
+  use sui::tx_context::{TxContext, sender};
   use std::string::{Self, String};
+  use sui::event::{emit};
   use ticketland::bitmap;
   use ticketland::merkle_tree;
   use ticketland::num_utils::{u64_to_str};
@@ -17,6 +18,13 @@ module ticketland::primary_market {
   const E_INVALID_SEAT_INDEX: u64 = 1;
   const E_NO_AVAILABLE_SEATS: u64 = 2;
   const E_SEAT_NOT_AVAILABLE: u64 = 3;
+
+  // Events
+  struct TicketPurchased has copy, drop {
+    nft_ticket: ID,
+    price: u32,
+    buyer: address,
+  }
 
   fun create_seat_leaf(seat_index: u64, seat_name: String): vector<u8> {
     let p1 = *string::bytes(&u64_to_str(seat_index));
@@ -73,11 +81,19 @@ module ticketland::primary_market {
     clock: &Clock,
     ctx: &mut TxContext
   ) {
+    let buyer = sender(ctx);
+
     // 1. pre-purchase checks
     pre_purchase(event, ticket_type_index, seat_index, seat_name, proof, clock);
 
     // 2. Create a new ticket
     // 3. post-purchase updates
     post_purchase(event, seat_index)
+
+    // emit(TicketPurchased {
+    //   id: uid_to_inner(&nft_tcicket.id),
+    //   price:,
+    //   buyer,
+    // })
   }
 }

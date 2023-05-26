@@ -5,7 +5,7 @@ module ticketland::event {
   use sui::tx_context::{TxContext, sender};
   use std::string::{utf8, String};
   use sui::clock::{Self, Clock};
-  use sui::event;
+  use sui::event::{emit};
   use sui::address;
   use sui::transfer::{transfer, public_transfer, share_object};
   use sui::dynamic_field as dfield;
@@ -191,12 +191,12 @@ module ticketland::event {
 
     let organizer_cap = OrganizerCap {id: object::new(ctx)};
 
-    event::emit(EventCreated {
+    emit(EventCreated {
       id: uid_to_inner(&event.id),
       creator,
     });
 
-    event::emit(EventNftCreated {
+    emit(EventNftCreated {
       id: uid_to_inner(&nft_event.id),
       creator,
     });
