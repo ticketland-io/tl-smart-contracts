@@ -2,8 +2,9 @@ module ticketland::nft_ticket {
   use sui::package;
   use sui::display;
   use sui::address;
+  use std::vector;
   use sui::object::{Self, UID, ID};
-  use sui::transfer::{transfer, public_transfer};
+  use sui::transfer::{transfer, public_transfer, share_object};
   use sui::tx_context::{TxContext, sender};
   use std::string::{utf8, String};
   use sui::vec_map::{Self, VecMap};
@@ -19,12 +20,12 @@ module ticketland::nft_ticket {
   struct NftRepository has key {
     id: UID,
     // event id (as address) => ticket_type_id => NftTicketDetails
-    ticket_nfts: VecMap<address, VecMap<ID, NftTicketDetails>>,
+    ticket_nfts: VecMap<address, VecMap<address, NftTicketDetails>>,
   }
 
   // A struct that contains the details of each NFT an event organizer issues and which can later be 
   // claimed by Ticket holders and which will mint and attach a new NftTicket
-  struct NftTicketDetails has store {
+  struct NftTicketDetails has store, drop {
     name: String,
     description: String,
     image_uri: String,
@@ -59,6 +60,9 @@ module ticketland::nft_ticket {
     /// All attached NFT tickets
     attached_nfts: Bag,
   }
+
+  /// Errros
+  const E_PROPERTY_VEC_MISMATCH: u64 = 0;
 
   fun init(otw: NFT_TICKET, ctx: &mut TxContext) {
     let ticket_keys = vector[
@@ -99,9 +103,15 @@ module ticketland::nft_ticket {
     display::update_version(&mut d1);
     display::update_version(&mut d2);
 
+    let nft_repository = NftRepository {
+      id: object::new(ctx),
+      ticket_nfts: vec_map::empty(),
+    };
+
     public_transfer(publisher, sender(ctx));
     public_transfer(d1, sender(ctx));
     public_transfer(d2, sender(ctx));
+    share_object(nft_repository);
   }
 
   /// Mints the root Ticket Object
@@ -126,13 +136,52 @@ module ticketland::nft_ticket {
 
   public entry fun register_nft_ticket(
     cap: &EventOrganizerCap,
+    nft_repository: &mut NftRepository,
     event_id: address,
+    ticket_type_id: address,
     name: String,
     description: String,
     image_uri: String,
     property_keys: vector<String>,
     property_values: vector<String>,
   ) {
+    let len = vector::length(&property_keys);
+    assert!(len == vector::length(&property_values), E_PROPERTY_VEC_MISMATCH);
     let event_id = event_organizer_cap_into_event_id(cap);
+    let properties = vec_map::empty<String, String>();
+    let i = 0;
+
+    while (i < len) {
+      let key = vector::pop_back(&mut property_keys);
+      let val = vector::pop_back(&mut property_values);
+      
+      vec_map::insert(&mut properties, key, val);
+      i = i + 1;
+    };
+
+    let nft_details = NftTicketDetails {
+      name,
+      description,
+      image_uri,
+      properties,
+    };
+
+    // store the nft details. Initialize the nested vec maps if needed
+    if(vec_map::contains(&nft_repository.ticket_nfts, &event_id)) {
+      let nested_map = vec_map::get_mut(&mut nft_repository.ticket_nfts, &event_id);
+
+      // create nested vec_map if needed
+      if(vec_map::contains(nested_map, &ticket_type_id)) {
+        // remove the old one and replace with the new
+        vec_map::remove(nested_map, &ticket_type_id);
+        vec_map::insert(nested_map, ticket_type_id, nft_details);
+      } else {
+        vec_map::insert(nested_map, ticket_type_id, nft_details);
+      }
+    } else {
+      vec_map::insert(&mut nft_repository.ticket_nfts, event_id, vec_map::empty());
+      let nested_map = vec_map::get_mut(&mut nft_repository.ticket_nfts, &event_id);
+      vec_map::insert(nested_map, ticket_type_id, nft_details);
+    }
   }
 }
