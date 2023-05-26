@@ -290,6 +290,24 @@ module ticketland::event {
     cap.event_id
   }
 
+  // Will chekc if the given ticket type if past of the event
+  public fun is_event_ticket_type(event: &Event, ticket_type_id: address): bool {
+    let len = vector::length(&event.ticket_types);
+    let i = 0;
+
+    while (i < len) {
+      let ticket_type = vector::borrow(&event.ticket_types, i);
+      
+      if(uid_to_address(&ticket_type.id) == ticket_type_id) {
+        return true;
+      };
+      
+      i = i + 1;
+    };
+
+    false
+  }
+
   public fun get_event_id(event: &Event): String {
     event.event_id
   }
