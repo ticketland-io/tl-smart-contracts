@@ -111,15 +111,17 @@ module ticketland::event {
 
     let event_nft_keys = vector[
       utf8(b"name"),
-      utf8(b"link"),
       utf8(b"description"),
+      utf8(b"image_uri"),
+      utf8(b"link"),
       utf8(b"creator"),
     ];
 
     let event_nft_values = vector[
       utf8(b"{name}"),
-      utf8(b"https://app.ticketland/events/{event_id}"),
       utf8(b"{description}"),
+      utf8(b"{image_uri}"),
+      utf8(b"https://app.ticketland/events/{event_id}"),
       address::to_string(creator),
     ];
 
