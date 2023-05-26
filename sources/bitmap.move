@@ -5,6 +5,12 @@ module ticketland::bitmap {
     inner: vector<u8>,
   }
 
+  public fun empty(): Bitmap {
+    Bitmap {
+      inner: vector[],
+    }
+  }
+
   fun index_to_byte_and_bit(index: u64): (u64, u8, u8) {
     let byte = index / 8;
     let bit = (index - (byte * 8) as u8); // instead of using module index % 8

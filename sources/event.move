@@ -11,6 +11,7 @@ module ticketland::event {
   use sui::dynamic_field as dfield;
   use std::vector;
   use sui::vec_map::{Self, VecMap};
+  use ticketland::bitmap::{Self, Bitmap};
 
   friend ticketland::event_registry;
   friend ticketland::sale_type;
@@ -70,7 +71,7 @@ module ticketland::event {
     /// By default all bits are 0. When a ticket at ticket index N (Nth bit) is purchased
     /// then the bit is flipped to 1 indicating that the seat is not available
     /// Bitmap allows us to store compact data e.g With 12500 bytes we can represent up to 12500 * 8 = 100_000 seats
-    seats: vector<u8>
+    seats: Bitmap,
   }
 
   struct SeatRange has store {
@@ -142,7 +143,7 @@ module ticketland::event {
   fun create_event_capacity(available_tickets: u32): EventCapacity {
     EventCapacity {
       available_tickets,
-      seats: vector[],
+      seats: bitmap::empty(),
     }
   }
 
