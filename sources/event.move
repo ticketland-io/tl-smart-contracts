@@ -29,7 +29,7 @@ module ticketland::event {
   /// One-Time-Witness for the module.
   struct EVENT has drop {}
 
-  struct EventNFT has key {
+  struct NftEvent has key {
     id: UID,
     /// The name of the NFT
     name: String,
@@ -48,7 +48,7 @@ module ticketland::event {
     id: UID,
     /// Internal off-chain event id
     event_id: String, 
-    /// The id of the EventNFT associated with this event
+    /// The id of the NftEvent associated with this event
     event_nft_id: ID,
     /// The event creator
     creator: address,
@@ -133,7 +133,7 @@ module ticketland::event {
     ];
 
     let publisher = package::claim(otw, ctx);
-    let display = display::new_with_fields<EventNFT>(&publisher, event_nft_keys, event_nft_values, ctx);
+    let display = display::new_with_fields<NftEvent>(&publisher, event_nft_keys, event_nft_values, ctx);
     // Commit first version of `Display` to apply changes.
     display::update_version(&mut display);
 
@@ -148,7 +148,7 @@ module ticketland::event {
     }
   }
 
-  /// Create a new shared Event object and the onwed by the event creator EventNFT object
+  /// Create a new shared Event object and the onwed by the event creator NftEvent object
   public(friend) fun create_event(
     event_id: String,
     name: String,
@@ -159,7 +159,7 @@ module ticketland::event {
     end_time: u64,
     ctx: &mut TxContext
   ) {
-    let event_nft = EventNFT {
+    let nft_event = NftEvent {
       id: object::new(ctx),
       name,
       description,
@@ -174,7 +174,7 @@ module ticketland::event {
     let event = Event {
       id: object::new(ctx),
       event_id,
-      event_nft_id: object::uid_to_inner(&event_nft.id),
+      event_nft_id: object::uid_to_inner(&nft_event.id),
       creator, 
       n_tickets,
       start_time,
@@ -191,14 +191,14 @@ module ticketland::event {
     });
 
     event::emit(EventNftCreated {
-      id: object::uid_to_inner(&event_nft.id),
+      id: object::uid_to_inner(&nft_event.id),
       creator,
     });
 
     // Event is shared as it will be immutably used in other function call by other users
     share_object(event);
     // However, the Event NFT itself is owned by the creator
-    transfer(event_nft, creator);
+    transfer(nft_event, creator);
     // Create and transfer the organizer cap as well so the event creator can manage events
     transfer(organizer_cap, creator);
   }
