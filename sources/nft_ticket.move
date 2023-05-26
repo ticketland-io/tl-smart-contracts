@@ -8,7 +8,7 @@ module ticketland::nft_ticket {
   use sui::tx_context::{TxContext, sender};
   use std::string::{utf8, String};
   use sui::vec_map::{Self, VecMap};
-  use sui::bag::{Self, Bag};
+  use sui::object_bag::{Self, ObjectBag};
   use ticketland::event::{
     Self, Event, EventOrganizerCap, event_organizer_cap_into_event_id, is_event_ticket_type,
   };
@@ -27,14 +27,14 @@ module ticketland::nft_ticket {
 
   // A struct that contains the details of each NFT an event organizer issues and which can later be 
   // claimed by Ticket holders and which will mint and attach a new NftTicket
-  struct NftTicketDetails has store, drop {
+  struct NftTicketDetails has store, copy, drop {
     name: String,
     description: String,
     image_uri: String,
     properties: VecMap<String, String>,
   }
 
-  struct NftTicket has key {
+  struct NftTicket has key, store {
     id: UID,
     /// The name of the NFT
     name: String,
@@ -60,7 +60,7 @@ module ticketland::nft_ticket {
     /// The seat name
     seat_name: String,
     /// All attached NFT tickets
-    attached_nfts: Bag,
+    attached_nfts: ObjectBag,
   }
 
   /// Errros
@@ -133,14 +133,13 @@ module ticketland::nft_ticket {
       seat_index,
       seat_name,
       price_sold,
-      attached_nfts: bag::new(ctx),
+      attached_nfts: object_bag::new(ctx),
     }
   }
 
+  /// Allows the event organizer to register new (or update existing) Ticket NFT descriptions. Any arbitraty number
+  /// of such NFTS can be created. Once description added, Ticket object owners can claim a new NFT in a subsequent call.
   public entry fun register_nft_ticket(
-    event: &Event,
-    cap: &EventOrganizerCap,
-    nft_repository: &mut NftRepository,
     event_id: address,
     ticket_type_id: address,
     name: String,
@@ -148,6 +147,9 @@ module ticketland::nft_ticket {
     image_uri: String,
     property_keys: vector<String>,
     property_values: vector<String>,
+    event: &Event,
+    cap: &EventOrganizerCap,
+    nft_repository: &mut NftRepository,
   ) {
     assert!(is_event_ticket_type(event, ticket_type_id), E_WRONG_TICKET_TYPE);
     let len = vector::length(&property_keys);
@@ -188,5 +190,42 @@ module ticketland::nft_ticket {
       let nested_map = vec_map::get_mut(&mut nft_repository.ticket_nfts, &event_id);
       vec_map::insert(nested_map, ticket_type_id, nft_details);
     }
+  }
+
+  /// Allows the owner of the given Ticket to mint a new NftTicket from the NftRepository. Each Ticket can claim one
+  /// NftTicket of each kind as defined in NftTicketDetails
+  public entry fun mint_nft_ticket(
+    event_id: address,
+    ticket_type_id: address,
+    nft_repository: &mut NftRepository,
+    ticket: &mut Ticket,
+    ctx: &mut TxContext,
+  ) {
+    let ticket_nfts = vec_map::get(&nft_repository.ticket_nfts, &event_id);
+    let nft_details = vec_map::get(ticket_nfts, &ticket_type_id);
+
+    // Copy the properties vec map
+    let properties = vec_map::empty<String, String>();
+    let keys = vec_map::keys(&nft_details.properties);
+    let len = vector::length(&keys);
+    let i = 0;
+
+    while (i < len) {
+      let key = vector::borrow(&keys, i);
+      vec_map::insert(&mut properties, *key, *vec_map::get(&nft_details.properties, key));
+      i = i + 1;
+    };
+
+    // create a new NftTicket
+    let nft_ticket = NftTicket {
+      id: object::new(ctx),
+      name: nft_details.name,
+      description: nft_details.description,
+      image_uri: nft_details.image_uri,
+      properties,
+    };
+
+    // attach to the Ticket
+    object_bag::add(&mut ticket.attached_nfts, *nft_details, nft_ticket);
   }
 }
