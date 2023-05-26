@@ -25,6 +25,9 @@ module ticketland::bitmap {
     let cur_val = *vector::borrow(&bitmap.inner, byte);
 
     // This is how we update the value of vector at a given index
+    // 1. Add the new value to the end of the vector
+    // 2. Swap it with the index we want to update
+    // 3. Delete the last time which will be the old value
     let last_item_index = vector::length(&bitmap.inner);
     vector::push_back(&mut bitmap.inner, ((cur_val ^ mask) as u8));
     vector::swap(&mut bitmap.inner, byte, last_item_index);
