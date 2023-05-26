@@ -3,6 +3,7 @@ module ticketland::event {
   use sui::tx_context::{Self, TxContext};
   use std::string::String;
   use sui::clock::{Self, Clock};
+  use sui::event;
   use sui::transfer::{transfer, share_object};
   use sui::dynamic_field as dfield;
   use std::vector;
@@ -79,6 +80,17 @@ module ticketland::event {
     seat_range: vector<u32>,
   }
 
+  // Events
+  struct EventCreated has copy, drop {
+    id: ID,
+    creator: address,
+  }
+
+  struct EventNftCreated has copy, drop {
+    id: ID,
+    creator: address,
+  }
+
   fun create_event_capacity(available_tickets: u32): EventCapacity {
     EventCapacity {
       available_tickets,
@@ -115,12 +127,22 @@ module ticketland::event {
 
     let organizer_cap = OrganizerCap {id: object::new(ctx)};
 
+    event::emit(EventCreated {
+      id: object::uid_to_inner(&event.id),
+      creator,
+    });
+
+    event::emit(EventNftCreated {
+      id: object::uid_to_inner(&event_nft.id),
+      creator,
+    });
+    
     // Event is shared as it will be immutably used in other function call by other users
     share_object(event);
     // However, the Event NFT itself is owned by the creator
     transfer(event_nft, creator);
     // Create and transfer the organizer cap as well so the event creator can manage events
-    transfer(organizer_cap, creator)
+    transfer(organizer_cap, creator);
   }
 
   /// Allows the bearer of the organizer cap to add the given ticket types to the event. It can only be called once per event
