@@ -20,10 +20,9 @@ module ticketland::event {
 
   /// Errors
   const E_START_TIME_BEFORE_END: u64 = 0;
-  const E_SEAT_RANGE: u64 = 1;
-  const E_MT_ROOT: u64 = 2;
-  const E_TICKET_TYPE_SET: u64 = 3;
-  const E_SALE_TYPE_SET: u64 = 4;
+  const E_MT_ROOT: u64 = 1;
+  const E_TICKET_TYPE_SET: u64 = 2;
+  const E_SALE_TYPE_SET: u64 = 3;
 
   /// One-Time-Witness for the module.
   struct EVENT has drop {}
@@ -74,6 +73,13 @@ module ticketland::event {
     seats: vector<u8>
   }
 
+  struct SeatRange has store {
+    // from inclusive
+    from: u32,
+    // to exclusive
+    to: u32
+  }
+
   /// Thhe ticket type. Note this struct will have SaleType attached as a dynamic field. This is so we can support
   /// hetergenous sale type values. We could also use Bag (which uses dynamic fields under the hood as well)
   struct TicketType has store {
@@ -89,8 +95,7 @@ module ticketland::event {
     /// The end time of the sale of this ticket type
     sale_end_time: u64,
     /// The range of the seats in the venue this ticket type is for
-    /// This vector inludes two items
-    seat_range: vector<u32>,
+    seat_range: SeatRange,
   }
 
   // Events
@@ -218,10 +223,13 @@ module ticketland::event {
       let sale_end_time = *vector::borrow(&sale_end_times, i);
       let mt_root = *vector::borrow(&mt_roots, i);
       let seat_range = *vector::borrow(&seat_ranges, i);
+      let seat_range = SeatRange {
+        from: *vector::borrow(&seat_range, 0),
+        to: *vector::borrow(&seat_range, 1),
+      };
 
       assert!(sale_start_time < sale_end_time, E_START_TIME_BEFORE_END);
       assert!(vector::length(&mt_root) == 32, E_MT_ROOT);
-      assert!(vector::length(&seat_range) == 2, E_MT_ROOT);
 
       let name = *vector::borrow(&names, i);
       let n_tickets = *vector::borrow(&n_tickets_list, i);
@@ -233,7 +241,7 @@ module ticketland::event {
         n_tickets,
         sale_start_time,
         sale_end_time,
-        seat_range
+        seat_range,
       });
 
       i = i + 1;
@@ -258,5 +266,26 @@ module ticketland::event {
     let ticket_type = vector::borrow_mut(&mut event.ticket_types, ticket_type_index);
     assert_add_sale_type(event.start_time, ticket_type, clock);
     dfield::add<vector<u8>, ST>(&mut ticket_type.id, SALE_TYPE_KEY, sale_type);
+  }
+
+  public fun has_available_seats(event: &Event): bool {
+    event.event_capacity.available_tickets > 0
+  }
+
+  public fun get_ticket_type(event: &Event, index: u64): &TicketType {
+    vector::borrow(&event.ticket_types, index)
+  }
+  
+  public fun get_ticket_type_sale_time(ticket_type: &TicketType): (u64, u64) {
+    (ticket_type.sale_start_time, ticket_type.sale_end_time)
+  }
+
+  /// Checks if the given seat index belongs to the seats assigned for the given ticket type
+  public fun is_ticket_type_seat(ticket_type: &TicketType, seat_index: u32): bool {
+    seat_index >= ticket_type.seat_range.from && seat_index < ticket_type.seat_range.to
+  }
+
+  public(friend) fun update_ticket_availability(event: &mut Event, available_tickets: u32) {
+    event.event_capacity.available_tickets = available_tickets;
   }
 }
