@@ -173,6 +173,9 @@ module ticketland::event {
       name,
       description,
       image_uri,
+      // We add this to make it future proof. We might want to add additional custom metadata
+      // attributes to each event NFT in the future. So to make module upgrades compatible, we
+      // want to have this field in the struct
       properties: vec_map::empty(),
     };
 
