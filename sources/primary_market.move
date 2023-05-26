@@ -50,6 +50,9 @@ module ticketland::primary_market {
 
     // 4. Check that the seat_index is available
     assert!(bitmap::is_set(get_seats(event), seat_index), E_SEAT_NOT_AVAILABLE)
+
+    // 5. Verify the merkle path
+    
   }
 
   public entry fun free_sale(
