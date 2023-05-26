@@ -2,7 +2,7 @@ module ticketland::num_utils {
   use std::vector;
   use std::string::{String, utf8};
 
-  public fun u32_to_str(value: u32): String {
+  public fun u64_to_str(value: u64): String {
     if (value == 0) {
       return utf8(b"0")
     };

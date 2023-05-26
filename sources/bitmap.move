@@ -19,7 +19,7 @@ module ticketland::bitmap {
     (byte, bit, mask)
   }
 
-  public fun is_set(index: u64, bitmap: &Bitmap): bool {
+  public fun is_set(bitmap: &Bitmap, index: u64): bool {
     let (byte, bit, _) = index_to_byte_and_bit(index);
     let value = *vector::borrow(&bitmap.inner, byte);
 

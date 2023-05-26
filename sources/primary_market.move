@@ -4,19 +4,20 @@ module ticketland::primary_market {
   use sui::clock::{Self, Clock};
   use sui::tx_context::{TxContext};
   use std::string::{Self, String};
+  use ticketland::bitmap;
   use ticketland::event::{
-    Event, get_ticket_type, get_ticket_type_sale_time, is_ticket_type_seat,
-    has_available_seats,
+    Event, get_ticket_type, get_ticket_type_sale_time, get_available_seat, get_seat_range, get_seats,
   };
-  use ticketland::num_utils::{u32_to_str};
+  use ticketland::num_utils::{u64_to_str};
 
   /// Erros
   const E_SALE_CLOSED: u64 = 0;
   const E_INVALID_SEAT_INDEX: u64 = 1;
   const E_NO_AVAILABLE_SEATS: u64 = 2;
+  const E_SEAT_NOT_AVAILABLE: u64 = 3;
 
-  fun create_seat_leaf(seat_index: u32, seat_name: String): vector<u8> {
-    let p1 = *string::bytes(&u32_to_str(seat_index));
+  fun create_seat_leaf(seat_index: u64, seat_name: String): vector<u8> {
+    let p1 = *string::bytes(&u64_to_str(seat_index));
     let p2 = b".";
     let p3 = string::bytes(&seat_name);
     
@@ -29,7 +30,7 @@ module ticketland::primary_market {
   fun pre_checks(
     event: &Event,
     ticket_type_index: u64,
-    seat_index: u32,
+    seat_index: u64,
     seat_name: String,
     clock: &Clock,
   ) {
@@ -41,21 +42,20 @@ module ticketland::primary_market {
     assert!(now >= start_time && now < end_time, E_SALE_CLOSED);
 
     // 2. Are there any available seats for this type of ticket
-    assert!(has_available_seats(event), E_NO_AVAILABLE_SEATS);
+    assert!(get_available_seat(event) > 0, E_NO_AVAILABLE_SEATS);
 
     // 3. Is seat_index within the seat range of the given ticket type
-    assert!(
-      is_ticket_type_seat(ticket_type, seat_index),
-      E_INVALID_SEAT_INDEX
-    );
+    let (from, to) = get_seat_range(ticket_type);
+    assert!(seat_index >= from && seat_index < to, E_INVALID_SEAT_INDEX);
 
-    // 3. Check that the seat_index is available
+    // 4. Check that the seat_index is available
+    assert!(bitmap::is_set(get_seats(event), seat_index), E_SEAT_NOT_AVAILABLE)
   }
 
   public entry fun free_sale(
     event: &Event,
     ticket_type_index: u64,
-    seat_index: u32,
+    seat_index: u64,
     seat_name: String,
     ctx: &mut TxContext
   ) {

@@ -24,9 +24,6 @@ module ticketland::event {
   const E_MT_ROOT: u64 = 1;
   const E_TICKET_TYPE_SET: u64 = 2;
   const E_SALE_TYPE_SET: u64 = 3;
-  const E_SALE_CLOSED: u64 = 4;
-  const E_INVALID_SEAT_INDEX: u64 = 5;
-  const E_NO_AVAILABLE_SEATS: u64 = 6;
 
   /// One-Time-Witness for the module.
   struct EVENT has drop {}
@@ -79,9 +76,9 @@ module ticketland::event {
 
   struct SeatRange has store {
     // from inclusive
-    from: u32,
+    from: u64,
     // to exclusive
-    to: u32
+    to: u64
   }
 
   /// Thhe ticket type. Note this struct will have SaleType attached as a dynamic field. This is so we can support
@@ -212,7 +209,7 @@ module ticketland::event {
     n_tickets_list: vector<u32>,
     sale_start_times: vector<u64>,
     sale_end_times: vector<u64>,
-    seat_ranges: vector<vector<u32>>,
+    seat_ranges: vector<vector<u64>>,
     event: &mut Event,
     _cap: &OrganizerCap,
     ctx: &mut TxContext
@@ -272,40 +269,28 @@ module ticketland::event {
     dfield::add<vector<u8>, ST>(&mut ticket_type.id, SALE_TYPE_KEY, sale_type);
   }
 
-  public fun has_available_seats(event: &Event): bool {
-    event.event_capacity.available_tickets > 0
+  public fun get_available_seat(event: &Event): u32 {
+    event.event_capacity.available_tickets
   }
 
   public fun get_ticket_type(event: &Event, index: u64): &TicketType {
     vector::borrow(&event.ticket_types, index)
   }
+  
+  public fun get_ticket_type_sale_time(ticket_type: &TicketType): (u64, u64) {
+    (ticket_type.sale_start_time, ticket_type.sale_end_time)
+  }
 
   /// Checks if the given seat index belongs to the seats assigned for the given ticket type
-  public fun is_ticket_type_seat(ticket_type: &TicketType, seat_index: u32): bool {
-    seat_index >= ticket_type.seat_range.from && seat_index < ticket_type.seat_range.to
+  public fun get_seat_range(ticket_type: &TicketType): (u64, u64) {
+    (ticket_type.seat_range.from, ticket_type.seat_range.to)
+  }
+  
+  public fun get_seats(event: &Event): &Bitmap {
+    &event.event_capacity.seats
   }
 
   public(friend) fun update_ticket_availability(event: &mut Event, available_tickets: u32) {
     event.event_capacity.available_tickets = available_tickets;
-  }
-
-  public fun ticket_purchase_checks(
-    event: &Event,
-    seat_index: u32,
-    clock: &Clock
-  ): bool {
-    let now = clock::timestamp_ms(clock);
-    let ticket_type = get_ticket_type(event, ticket_type_index);
-
-    // 1. Check sale time
-    assert!(now >= ticket_type.sale_start_time && now < ticket_type.sale_end_time, E_SALE_CLOSED);
-
-    // 2. Are there any available seats for this type of ticket
-    assert!(event.event_capacity.available_tickets > 0, E_NO_AVAILABLE_SEATS);
-
-    // 3. Is seat_index within the seat range of the given ticket type
-    assert!(is_ticket_type_seat(ticket_type, seat_index), E_INVALID_SEAT_INDEX);
-
-    // 4. Check that the seat_index is available
   }
 }
