@@ -6,11 +6,11 @@ module ticketland::primary_market {
   use std::string::{Self, String};
   use ticketland::bitmap;
   use ticketland::merkle_tree;
+  use ticketland::num_utils::{u64_to_str};
   use ticketland::event::{
     Event, get_ticket_type, get_ticket_type_sale_time, get_available_seats, get_seat_range, get_seats,
-    get_ticket_type_mt_root,
+    get_ticket_type_mt_root, update_seats,
   };
-  use ticketland::num_utils::{u64_to_str};
 
   /// Erros
   const E_SALE_CLOSED: u64 = 0;
@@ -59,12 +59,13 @@ module ticketland::primary_market {
     merkle_tree::verify(mt_root, proof, create_seat_leaf(seat_index, seat_name));
   }
 
-  fun post_purchase() {
-
+  fun post_purchase(event: &mut Event, seat_index: u64) {
+    // 5. Update seats
+    update_seats(event, seat_index);
   }
 
   public entry fun free_sale(
-    event: &Event,
+    event: &mut Event,
     ticket_type_index: u64,
     seat_index: u64,
     seat_name: String,

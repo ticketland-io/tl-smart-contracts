@@ -15,6 +15,7 @@ module ticketland::event {
 
   friend ticketland::event_registry;
   friend ticketland::sale_type;
+  friend ticketland::primary_market;
 
   /// constants
   const SALE_TYPE_KEY: vector<u8> = b"sale_type";
@@ -296,5 +297,9 @@ module ticketland::event {
 
   public(friend) fun increment_tickets_sold(event: &mut Event) {
     event.event_capacity.tickets_sold = event.event_capacity.tickets_sold + 1;
+  }
+
+  public(friend) fun update_seats(event: &mut Event, seat_index: u64) {
+    bitmap::flip_bit(&mut event.event_capacity.seats, seat_index);
   }
 }

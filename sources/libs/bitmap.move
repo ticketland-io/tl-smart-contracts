@@ -26,7 +26,7 @@ module ticketland::bitmap {
     (value >> bit) % 2 == 1
   }
 
-  public fun flip_bit(index: u64, bitmap: &mut Bitmap) {
+  public fun flip_bit(bitmap: &mut Bitmap, index: u64) {
     let (byte, _, mask) = index_to_byte_and_bit(index);
     let cur_val = *vector::borrow(&bitmap.inner, byte);
 
