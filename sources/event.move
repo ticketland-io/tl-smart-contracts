@@ -31,7 +31,7 @@ module ticketland::event {
 
   struct NftEvent has key {
     id: UID,
-    /// The off-chain 
+    /// Internal off-chain event id
     event_id: String,
     /// The name of the NFT
     name: String,
@@ -119,14 +119,16 @@ module ticketland::event {
     let creator = sender(ctx);
 
     let event_nft_keys = vector[
-      utf8(b"name"),
-      utf8(b"description"),
-      utf8(b"image_uri"),
-      utf8(b"link"),
-      utf8(b"creator"),
+      utf8(b"Event id"),
+      utf8(b"Name"),
+      utf8(b"Description"),
+      utf8(b"Image Uri"),
+      utf8(b"Link"),
+      utf8(b"Creator"),
     ];
 
     let event_nft_values = vector[
+      utf8(b"{event_id}"),
       utf8(b"{name}"),
       utf8(b"{description}"),
       utf8(b"{image_uri}"),
