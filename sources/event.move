@@ -50,6 +50,7 @@ module ticketland::event {
     event_id: address,
   }
 
+  // THe shared event object
   struct Event has key {
     id: UID,
     /// Internal off-chain event id
@@ -299,7 +300,7 @@ module ticketland::event {
       let ticket_type = vector::borrow(&event.ticket_types, i);
       
       if(uid_to_address(&ticket_type.id) == ticket_type_id) {
-        return true;
+        return true
       };
       
       i = i + 1;

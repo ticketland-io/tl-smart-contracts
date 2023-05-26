@@ -9,7 +9,9 @@ module ticketland::nft_ticket {
   use std::string::{utf8, String};
   use sui::vec_map::{Self, VecMap};
   use sui::bag::{Self, Bag};
-  use ticketland::event::{Self, EventOrganizerCap, event_organizer_cap_into_event_id};
+  use ticketland::event::{
+    Self, Event, EventOrganizerCap, event_organizer_cap_into_event_id, is_event_ticket_type,
+  };
 
   friend ticketland::primary_market;
 
@@ -63,6 +65,7 @@ module ticketland::nft_ticket {
 
   /// Errros
   const E_PROPERTY_VEC_MISMATCH: u64 = 0;
+  const E_WRONG_TICKET_TYPE: u64 = 1;
 
   fun init(otw: NFT_TICKET, ctx: &mut TxContext) {
     let ticket_keys = vector[
@@ -135,6 +138,7 @@ module ticketland::nft_ticket {
   }
 
   public entry fun register_nft_ticket(
+    event: &Event,
     cap: &EventOrganizerCap,
     nft_repository: &mut NftRepository,
     event_id: address,
@@ -145,6 +149,7 @@ module ticketland::nft_ticket {
     property_keys: vector<String>,
     property_values: vector<String>,
   ) {
+    assert!(is_event_ticket_type(event, ticket_type_id), E_WRONG_TICKET_TYPE);
     let len = vector::length(&property_keys);
     assert!(len == vector::length(&property_values), E_PROPERTY_VEC_MISMATCH);
     let event_id = event_organizer_cap_into_event_id(cap);
