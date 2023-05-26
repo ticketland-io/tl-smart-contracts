@@ -9,7 +9,7 @@ module ticketland::primary_market {
   use ticketland::num_utils::{u64_to_str};
   use ticketland::event::{
     Event, get_ticket_type, get_ticket_type_sale_time, get_available_seats, get_seat_range, get_seats,
-    get_ticket_type_mt_root, update_seats,
+    get_ticket_type_mt_root, update_seats, increment_tickets_sold,
   };
 
   /// Erros
@@ -60,8 +60,8 @@ module ticketland::primary_market {
   }
 
   fun post_purchase(event: &mut Event, seat_index: u64) {
-    // 5. Update seats
     update_seats(event, seat_index);
+    increment_tickets_sold(event);
   }
 
   public entry fun free_sale(
@@ -78,6 +78,6 @@ module ticketland::primary_market {
 
     // 2. Create a new ticket
     // 3. post-purchase updates
-    // post_purchase();
+    post_purchase(event, seat_index)
   }
 }
