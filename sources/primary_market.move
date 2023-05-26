@@ -7,7 +7,7 @@ module ticketland::primary_market {
   use ticketland::bitmap;
   use ticketland::merkle_tree;
   use ticketland::event::{
-    Event, get_ticket_type, get_ticket_type_sale_time, get_available_seat, get_seat_range, get_seats,
+    Event, get_ticket_type, get_ticket_type_sale_time, get_available_seats, get_seat_range, get_seats,
     get_ticket_type_mt_root,
   };
   use ticketland::num_utils::{u64_to_str};
@@ -29,7 +29,7 @@ module ticketland::primary_market {
     p1
   }
 
-  fun pre_checks(
+  fun pre_purchase(
     event: &Event,
     ticket_type_index: u64,
     seat_index: u64,
@@ -45,7 +45,7 @@ module ticketland::primary_market {
     assert!(now >= start_time && now < end_time, E_SALE_CLOSED);
 
     // 2. Are there any available seats for this type of ticket
-    assert!(get_available_seat(event) > 0, E_NO_AVAILABLE_SEATS);
+    assert!(get_available_seats(event) > 0, E_NO_AVAILABLE_SEATS);
 
     // 3. Is seat_index within the seat range of the given ticket type
     let (from, to) = get_seat_range(ticket_type);
@@ -59,16 +59,24 @@ module ticketland::primary_market {
     merkle_tree::verify(mt_root, proof, create_seat_leaf(seat_index, seat_name));
   }
 
+  fun post_purchase() {
+
+  }
+
   public entry fun free_sale(
     event: &Event,
     ticket_type_index: u64,
     seat_index: u64,
     seat_name: String,
     proof: vector<vector<u8>>,
+    clock: &Clock,
     ctx: &mut TxContext
   ) {
-    // 1. pre-checks: Verify the seat using merkle path verification
+    // 1. pre-purchase checks
+    pre_purchase(event, ticket_type_index, seat_index, seat_name, proof, clock);
+
     // 2. Create a new ticket
-    // 3. post-checks: update event capacity bitmap and other relevant fields
+    // 3. post-purchase updates
+    // post_purchase();
   }
 }

@@ -65,7 +65,7 @@ module ticketland::event {
 
   struct EventCapacity has store {
     /// Number of tickets still available for sale
-    available_tickets: u32,
+    tickets_sold: u32,
 
     /// A bitmap which has n_tickets bits that represent each seat
     /// By default all bits are 0. When a ticket at ticket index N (Nth bit) is purchased
@@ -140,9 +140,9 @@ module ticketland::event {
     public_transfer(display, sender(ctx));
   }
 
-  fun create_event_capacity(available_tickets: u32): EventCapacity {
+  fun create_event_capacity(): EventCapacity {
     EventCapacity {
-      available_tickets,
+      tickets_sold: 0,
       seats: bitmap::empty(),
     }
   }
@@ -178,7 +178,7 @@ module ticketland::event {
       n_tickets,
       start_time,
       end_time,
-      event_capacity: create_event_capacity(n_tickets),
+      event_capacity: create_event_capacity(),
       ticket_types: vector[],
     };
 
@@ -269,8 +269,8 @@ module ticketland::event {
     dfield::add<vector<u8>, ST>(&mut ticket_type.id, SALE_TYPE_KEY, sale_type);
   }
 
-  public fun get_available_seat(event: &Event): u32 {
-    event.event_capacity.available_tickets
+  public fun get_available_seats(event: &Event): u32 {
+    event.n_tickets - event.event_capacity.tickets_sold
   }
 
   public fun get_ticket_type(event: &Event, index: u64): &TicketType {
@@ -294,7 +294,7 @@ module ticketland::event {
     &ticket_type.mt_root
   }
 
-  public(friend) fun update_ticket_availability(event: &mut Event, available_tickets: u32) {
-    event.event_capacity.available_tickets = available_tickets;
+  public(friend) fun increment_tickets_sold(event: &mut Event) {
+    event.event_capacity.tickets_sold = event.event_capacity.tickets_sold + 1;
   }
 }
