@@ -1,7 +1,7 @@
 module ticketland::event {
   use sui::package;
   use sui::display;
-  use sui::object::{Self, UID, ID, uid_to_inner, uid_to_address};
+  use sui::object::{Self, UID, ID, uid_to_inner};
   use sui::tx_context::{TxContext, sender};
   use std::string::{utf8, String};
   use sui::clock::{Self, Clock};
@@ -31,6 +31,8 @@ module ticketland::event {
 
   struct NftEvent has key {
     id: UID,
+    /// The off-chain 
+    event_id: String,
     /// The name of the NFT
     name: String,
     /// The description
@@ -163,16 +165,13 @@ module ticketland::event {
     let id = object::new(ctx);
     let nft_event_id = object::new(ctx);
 
-    // Create the basic metadata attributes
-    let properties = vec_map::empty();
-    vec_map::insert(&mut properties, utf8(b"event_id"), address::to_string(uid_to_address(&id)));
-    
     let nft_event = NftEvent {
       id: nft_event_id,
+      event_id,
       name,
       description,
       image_uri,
-      properties,
+      properties: vec_map::empty(),
     };
 
     let creator = sender(ctx);

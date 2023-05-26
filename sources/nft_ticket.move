@@ -24,7 +24,7 @@
 //   fun init(otw: NFT_TICKET, ctx: &mut TxContext) {
 //     let creator = sender(ctx);
 
-//     let event_nft_keys = vector[
+//     let nft_keys = vector[
 //       utf8(b"name"),
 //       utf8(b"description"),
 //       utf8(b"image_uri"),
@@ -32,7 +32,7 @@
 //       utf8(b"creator"),
 //     ];
 
-//     let event_nft_values = vector[
+//     let nft_values = vector[
 //       utf8(b"{name}"),
 //       utf8(b"{description}"),
 //       utf8(b"{image_uri}"),
@@ -41,7 +41,7 @@
 //     ];
 
 //     let publisher = package::claim(otw, ctx);
-//     let display = display::new_with_fields<NftEvent>(&publisher, event_nft_keys, event_nft_values, ctx);
+//     let display = display::new_with_fields<NftTicket>(&publisher, nft_keys, nft_values, ctx);
 //     // Commit first version of `Display` to apply changes.
 //     display::update_version(&mut display);
 
