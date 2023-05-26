@@ -1,7 +1,7 @@
 module ticketland::event {
   use sui::package;
   use sui::display;
-  use sui::object::{Self, UID, ID, uid_to_inner};
+  use sui::object::{Self, UID, ID, uid_to_inner, uid_to_address};
   use sui::tx_context::{TxContext, sender};
   use std::string::{utf8, String};
   use sui::clock::{Self, Clock};
@@ -16,6 +16,7 @@ module ticketland::event {
   friend ticketland::event_registry;
   friend ticketland::sale_type;
   friend ticketland::primary_market;
+  friend ticketland::nft_ticket;
 
   /// constants
   const SALE_TYPE_KEY: vector<u8> = b"sale_type";
@@ -44,7 +45,10 @@ module ticketland::event {
   }
 
   // Cap that allow the bearer to manage events. It has store ability because we want free native transfers on this object
-  struct OrganizerCap has key, store { id: UID }
+  struct EventOrganizerCap has key, store {
+    id: UID,
+    event_id: address,
+  }
 
   struct Event has key {
     id: UID,
@@ -192,7 +196,10 @@ module ticketland::event {
       ticket_types: vector[],
     };
 
-    let organizer_cap = OrganizerCap {id: object::new(ctx)};
+    let organizer_cap = EventOrganizerCap {
+      id: object::new(ctx),
+      event_id: uid_to_address(&event.id),
+    };
 
     emit(EventCreated {
       id: uid_to_inner(&event.id),
@@ -221,7 +228,7 @@ module ticketland::event {
     sale_end_times: vector<u64>,
     seat_ranges: vector<vector<u64>>,
     event: &mut Event,
-    _cap: &OrganizerCap,
+    _cap: &EventOrganizerCap,
     ctx: &mut TxContext
   ) {
     assert!(vector::length(&event.ticket_types) == 0, E_TICKET_TYPE_SET);
@@ -277,6 +284,10 @@ module ticketland::event {
     let ticket_type = vector::borrow_mut(&mut event.ticket_types, ticket_type_index);
     assert_add_sale_type(event.start_time, ticket_type, clock);
     dfield::add<vector<u8>, ST>(&mut ticket_type.id, SALE_TYPE_KEY, sale_type);
+  }
+
+  public(friend) fun event_organizer_cap_into_event_id(cap: &EventOrganizerCap): address {
+    cap.event_id
   }
 
   public fun get_event_id(event: &Event): String {

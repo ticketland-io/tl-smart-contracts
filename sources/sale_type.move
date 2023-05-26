@@ -1,6 +1,6 @@
 module ticketland::sale_type {
   use sui::clock::{Clock};
-  use ticketland::event::{Event, OrganizerCap, add_sale_type};
+  use ticketland::event::{Event, EventOrganizerCap, add_sale_type};
 
   struct Free has store {}
   
@@ -32,7 +32,7 @@ module ticketland::sale_type {
     event: &mut Event,
     ticket_type_index: u64,
     clock: &Clock,
-    _cap: &OrganizerCap,
+    _cap: &EventOrganizerCap,
   ) {
     add_sale_type(Free {}, event, ticket_type_index, clock);
   }
@@ -42,7 +42,7 @@ module ticketland::sale_type {
     ticket_type_index: u64,
     amount: u256,
     clock: &Clock,
-    _cap: &OrganizerCap,
+    _cap: &EventOrganizerCap,
   ) {
     add_sale_type(FixedPrice {amount}, event, ticket_type_index, clock);
   }
@@ -52,7 +52,7 @@ module ticketland::sale_type {
     ticket_type_index: u64,
     amount: u256,
     clock: &Clock,
-    _cap: &OrganizerCap,
+    _cap: &EventOrganizerCap,
   ) {
     add_sale_type(Refundable {amount}, event, ticket_type_index, clock);
   }
@@ -63,7 +63,7 @@ module ticketland::sale_type {
     start_price: u256,
     min_bid: u256,
     clock: &Clock,
-    _cap: &OrganizerCap,
+    _cap: &EventOrganizerCap,
   ) {
     let sale_type = EnglishAuction {start_price, min_bid};
     add_sale_type(sale_type, event, ticket_type_index, clock);
@@ -77,7 +77,7 @@ module ticketland::sale_type {
     curve_length: u16,
     drop_interval: u16,
     clock: &Clock,
-    _cap: &OrganizerCap,
+    _cap: &EventOrganizerCap,
   ) {
     let sale_type = DutchAuction {start_price, end_price, curve_length, drop_interval};
     add_sale_type(sale_type, event, ticket_type_index, clock);

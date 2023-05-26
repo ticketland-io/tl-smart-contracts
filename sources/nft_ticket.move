@@ -8,18 +8,20 @@ module ticketland::nft_ticket {
   use std::string::{utf8, String};
   use sui::vec_map::{Self, VecMap};
   use sui::bag::{Self, Bag};
+  use ticketland::event::{Self, EventOrganizerCap, event_organizer_cap_into_event_id};
 
   friend ticketland::primary_market;
 
   /// One-Time-Witness for the module.
   struct NFT_TICKET has drop {}
 
-  struct Config has key {
+  /// A registrys NftTicketDetails that are used to utlimately mint new NftTickets
+  struct NftRepository has key {
     id: UID,
-    // event id => ticket_type_id => NftTicketDetails
-    properties: VecMap<String, VecMap<ID, NftTicketDetails>>,
+    // event id (as address) => ticket_type_id => NftTicketDetails
+    ticket_nfts: VecMap<address, VecMap<ID, NftTicketDetails>>,
   }
-  
+
   // A struct that contains the details of each NFT an event organizer issues and which can later be 
   // claimed by Ticket holders and which will mint and attach a new NftTicket
   struct NftTicketDetails has store {
@@ -120,5 +122,17 @@ module ticketland::nft_ticket {
       price_sold,
       attached_nfts: bag::new(ctx),
     }
+  }
+
+  public entry fun register_nft_ticket(
+    cap: &EventOrganizerCap,
+    event_id: address,
+    name: String,
+    description: String,
+    image_uri: String,
+    property_keys: vector<String>,
+    property_values: vector<String>,
+  ) {
+    let event_id = event_organizer_cap_into_event_id(cap);
   }
 }
