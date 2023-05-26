@@ -290,6 +290,10 @@ module ticketland::event {
     &event.event_capacity.seats
   }
 
+  public fun get_ticket_type_mt_root(ticket_type: &TicketType): &vector<u8> {
+    &ticket_type.mt_root
+  }
+
   public(friend) fun update_ticket_availability(event: &mut Event, available_tickets: u32) {
     event.event_capacity.available_tickets = available_tickets;
   }

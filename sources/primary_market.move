@@ -5,8 +5,10 @@ module ticketland::primary_market {
   use sui::tx_context::{TxContext};
   use std::string::{Self, String};
   use ticketland::bitmap;
+  use ticketland::merkle_tree;
   use ticketland::event::{
     Event, get_ticket_type, get_ticket_type_sale_time, get_available_seat, get_seat_range, get_seats,
+    get_ticket_type_mt_root,
   };
   use ticketland::num_utils::{u64_to_str};
 
@@ -32,6 +34,7 @@ module ticketland::primary_market {
     ticket_type_index: u64,
     seat_index: u64,
     seat_name: String,
+    proof: vector<vector<u8>>,
     clock: &Clock,
   ) {
     let now = clock::timestamp_ms(clock);
@@ -49,10 +52,11 @@ module ticketland::primary_market {
     assert!(seat_index >= from && seat_index < to, E_INVALID_SEAT_INDEX);
 
     // 4. Check that the seat_index is available
-    assert!(bitmap::is_set(get_seats(event), seat_index), E_SEAT_NOT_AVAILABLE)
+    assert!(bitmap::is_set(get_seats(event), seat_index), E_SEAT_NOT_AVAILABLE);
 
     // 5. Verify the merkle path
-    
+    let mt_root = get_ticket_type_mt_root(ticket_type);
+    merkle_tree::verify(mt_root, proof, create_seat_leaf(seat_index, seat_name));
   }
 
   public entry fun free_sale(
@@ -60,6 +64,7 @@ module ticketland::primary_market {
     ticket_type_index: u64,
     seat_index: u64,
     seat_name: String,
+    proof: vector<vector<u8>>,
     ctx: &mut TxContext
   ) {
     // 1. pre-checks: Verify the seat using merkle path verification

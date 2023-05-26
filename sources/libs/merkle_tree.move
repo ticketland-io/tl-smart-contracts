@@ -39,8 +39,8 @@ module ticketland::merkle_tree {
     }
   }
 
-  public entry fun verify(
-    root: vector<u8>,
+  public fun verify(
+    root: &vector<u8>,
     proof: vector<vector<u8>>,
     leaf: vector<u8>
   ) {
@@ -54,6 +54,6 @@ module ticketland::merkle_tree {
       i = i + 1;
     };
 
-    assert!(compare_vector(&computed_hash, &root) == EQUAL, E_VERIFICATION_FAILED);
+    assert!(compare_vector(&computed_hash, root) == EQUAL, E_VERIFICATION_FAILED);
   }
 }
