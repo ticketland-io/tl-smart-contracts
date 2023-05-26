@@ -1,7 +1,7 @@
 module ticketland::event {
   use sui::package;
   use sui::display;
-  use sui::object::{Self, UID, ID};
+  use sui::object::{Self, UID, ID, uid_to_inner, uid_to_address};
   use sui::tx_context::{TxContext, sender};
   use std::string::{utf8, String};
   use sui::clock::{Self, Clock};
@@ -159,22 +159,27 @@ module ticketland::event {
     end_time: u64,
     ctx: &mut TxContext
   ) {
+    // the event id
+    let id = object::new(ctx);
+    let nft_event_id = object::new(ctx);
+
+    // Create the basic metadata attributes
+    let properties = vec_map::empty();
+    vec_map::insert(&mut properties, utf8(b"event_id"), address::to_string(uid_to_address(&id)));
+    
     let nft_event = NftEvent {
-      id: object::new(ctx),
+      id: nft_event_id,
       name,
       description,
       image_uri,
-      // We add this to make it future proof. We might want to add additional custom metadata
-      // attributes to each event NFT in the future. So to make module upgrades compatible, we
-      // want to have this field in the struct
-      properties: vec_map::empty(),
+      properties,
     };
 
     let creator = sender(ctx);
     let event = Event {
-      id: object::new(ctx),
+      id,
       event_id,
-      event_nft_id: object::uid_to_inner(&nft_event.id),
+      event_nft_id: uid_to_inner(&nft_event.id),
       creator, 
       n_tickets,
       start_time,
@@ -186,12 +191,12 @@ module ticketland::event {
     let organizer_cap = OrganizerCap {id: object::new(ctx)};
 
     event::emit(EventCreated {
-      id: object::uid_to_inner(&event.id),
+      id: uid_to_inner(&event.id),
       creator,
     });
 
     event::emit(EventNftCreated {
-      id: object::uid_to_inner(&nft_event.id),
+      id: uid_to_inner(&nft_event.id),
       creator,
     });
 
