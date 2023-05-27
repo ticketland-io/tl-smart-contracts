@@ -1,9 +1,9 @@
 module ticketland::primary_market {
-  use sui::object::{Self, UID, ID, uid_to_inner};
+  use sui::object::{Self, UID, ID};
   use std::vector;
   use sui::clock::{Self, Clock};
   use sui::tx_context::{TxContext, sender};
-  use std::string::{Self, String};
+  use std::string::{Self, String, utf8};
   use sui::event::{emit};
   use ticketland::bitmap;
   use ticketland::merkle_tree;
@@ -24,9 +24,10 @@ module ticketland::primary_market {
 
   // Events
   struct TicketPurchased has copy, drop {
-    nft_ticket: ID,
+    ticket_id: address,
     price: u32,
     buyer: address,
+    sale_type: String,
   }
 
   fun create_seat_leaf(seat_index: u64, seat_name: String): vector<u8> {
@@ -82,8 +83,9 @@ module ticketland::primary_market {
     seat_index: u64,
     seat_name: String,
     ctx: &mut TxContext
-  ) {
+  ): address {
     let ticket_type = get_ticket_type(event, ticket_type_index);
+    let price_sold = 0;
 
     nft_ticket::mint_ticket(
       get_event_id(event),
@@ -92,9 +94,9 @@ module ticketland::primary_market {
       ticket_name,
       u64_to_str(seat_index),
       seat_name,
-      price_sold: 0,
+      price_sold,
       ctx,
-    );
+    )
   }
 
   public entry fun free_sale(
@@ -113,7 +115,7 @@ module ticketland::primary_market {
     pre_purchase(event, ticket_type_index, seat_index, seat_name, proof, clock);
 
     // 2. Create a new ticket
-    mint_ticket(
+    let ticket_id = mint_ticket(
       event,
       ticket_type_index,
       ticket_name,
@@ -123,12 +125,13 @@ module ticketland::primary_market {
     );
 
     // 3. post-purchase updates
-    post_purchase(event, seat_index)
+    post_purchase(event, seat_index);
 
-    // emit(TicketPurchased {
-    //   id: uid_to_inner(&nft_tcicket.id),
-    //   price:,
-    //   buyer,
-    // })
+    emit(TicketPurchased {
+      ticket_id,
+      price: 0,
+      buyer,
+      sale_type: utf8(b"free"),
+    });
   }
 }

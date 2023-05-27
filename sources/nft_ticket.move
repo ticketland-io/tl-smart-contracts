@@ -3,7 +3,7 @@ module ticketland::nft_ticket {
   use sui::display;
   use sui::address;
   use std::vector;
-  use sui::object::{Self, UID, ID};
+  use sui::object::{Self, UID, uid_to_address};
   use sui::transfer::{transfer, public_transfer, share_object};
   use sui::tx_context::{TxContext, sender};
   use std::string::{utf8, String};
@@ -226,9 +226,12 @@ module ticketland::nft_ticket {
     seat_name: String,
     price_sold: u256,
     ctx: &mut TxContext,
-  ) {
+  ): address {
+    let id = object::new(ctx);
+    let ticket_id = uid_to_address(&id);
+
     let ticket = Ticket {
-      id: object::new(ctx),
+      id,
       event_id,
       ticket_type_id,
       e_id,
@@ -240,6 +243,8 @@ module ticketland::nft_ticket {
     };
 
     transfer(ticket, sender(ctx));
+
+    ticket_id
   }
 
   /// Allows the event organizer to register new (or update existing) Ticket NFT descriptions. Any arbitraty number
