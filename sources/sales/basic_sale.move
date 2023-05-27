@@ -84,4 +84,22 @@ module ticketland::basic_sale {
 
     (cnt_id, price, fees)
   }
+
+  public(friend) entry fun refundable<T>(
+        event: &Event,
+    coins: &mut Coin<T>,
+    ticket_type_index: u64,
+    ticket_name: String,
+    seat_index: u64,
+    seat_name: String,
+    config: &Config,
+    ctx: &mut TxContext
+  ): (address, u64) {
+    let ticket_type = get_ticket_type(event, ticket_type_index);
+    let coin_type = type_name::into_string(type_name::get<Coin<T>>());
+    let price = get_refundable_price_amount(
+      get_sale_type<FixedPrice>(event, ticket_type_index),
+      coin_type,
+    );
+  }
 }

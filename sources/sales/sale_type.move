@@ -145,4 +145,8 @@ module ticketland::sale_type {
   public fun get_fixed_price_amount(fixed_price: &FixedPrice, coin_type: String): u64 {
     *vec_map::get(&fixed_price.price, &coin_type)
   }
+
+  public fun get_refundable_price_amount(refundable: &Refundable, coin_type: String): u64 {
+    *vec_map::get(&refundable.price, &coin_type)
+  }
 }
