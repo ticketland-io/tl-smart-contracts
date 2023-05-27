@@ -42,6 +42,10 @@ module ticketland::attendance {
     share_object(attendance);
   }
 
+  public fun has_attended(cnt_id: address, config: &Config): bool {
+    *vec_map::get(&config.attendace, &cnt_id)
+  }
+
   /// A function that is called by the event organizer and transfers a new operator cap to the given address
   /// This must be called right after an event is created.
   public(friend) fun create_op_cap(
@@ -77,8 +81,7 @@ module ticketland::attendance {
     config: &mut Config,
   ) {
     let cnt_id = get_cnt_id(cnt);
-    let has_attended = *vec_map::get(&config.attendace, &cnt_id);
-    assert!(has_attended, E_DID_NOT_ATTEND);
+    assert!(has_attended(cnt_id, config), E_DID_NOT_ATTEND);
 
     ticket::set_attended(cnt);
     emit(ConfirmAttended {cnt_id})

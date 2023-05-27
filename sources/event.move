@@ -150,6 +150,70 @@ module ticketland::event {
     public_transfer(display, creator);
   }
 
+
+  public(friend) fun get_event_organizer_cap_event_id(cap: &EventOrganizerCap): address {
+    cap.event_id
+  }
+
+  // Will chekc if the given ticket type if past of the event
+  public fun is_event_ticket_type(event: &Event, ticket_type_id: address): bool {
+    let len = vector::length(&event.ticket_types);
+    let i = 0;
+
+    while (i < len) {
+      let ticket_type = vector::borrow(&event.ticket_types, i);
+      
+      if(uid_to_address(&ticket_type.id) == ticket_type_id) {
+        return true
+      };
+      
+      i = i + 1;
+    };
+
+    false
+  }
+
+  public fun get_event_id(event: &Event): address {
+    uid_to_address(&event.id)
+  }
+
+  public fun get_event_creator(event: &Event): address {
+    event.creator
+  }
+
+  public fun get_offchain_event_id(event: &Event): String {
+    event.e_id
+  }
+
+  public fun get_available_seats(event: &Event): u32 {
+    event.n_tickets - event.event_capacity.tickets_sold
+  }
+
+  public fun get_ticket_type(event: &Event, index: u64): &TicketType {
+    vector::borrow(&event.ticket_types, index)
+  }
+
+  public fun get_ticket_type_id(ticket_type: &TicketType): address {
+    uid_to_address(&ticket_type.id)
+  }
+  
+  public fun get_ticket_type_sale_time(ticket_type: &TicketType): (u64, u64) {
+    (ticket_type.sale_start_time, ticket_type.sale_end_time)
+  }
+
+  /// Checks if the given seat index belongs to the seats assigned for the given ticket type
+  public fun get_seat_range(ticket_type: &TicketType): (u64, u64) {
+    (ticket_type.seat_range.from, ticket_type.seat_range.to)
+  }
+  
+  public fun get_seats(event: &Event): &Bitmap {
+    &event.event_capacity.seats
+  }
+
+  public fun get_ticket_type_mt_root(ticket_type: &TicketType): &vector<u8> {
+    &ticket_type.mt_root
+  }
+
   fun create_event_capacity(): EventCapacity {
     EventCapacity {
       tickets_sold: 0,
@@ -307,69 +371,6 @@ module ticketland::event {
     let ticket_type = vector::borrow_mut(&mut event.ticket_types, ticket_type_index);
     assert_add_sale_type(event.start_time, ticket_type, clock);
     dfield::add<vector<u8>, ST>(&mut ticket_type.id, SALE_TYPE_KEY, sale_type);
-  }
-
-  public(friend) fun get_event_organizer_cap_event_id(cap: &EventOrganizerCap): address {
-    cap.event_id
-  }
-
-  // Will chekc if the given ticket type if past of the event
-  public fun is_event_ticket_type(event: &Event, ticket_type_id: address): bool {
-    let len = vector::length(&event.ticket_types);
-    let i = 0;
-
-    while (i < len) {
-      let ticket_type = vector::borrow(&event.ticket_types, i);
-      
-      if(uid_to_address(&ticket_type.id) == ticket_type_id) {
-        return true
-      };
-      
-      i = i + 1;
-    };
-
-    false
-  }
-
-  public fun get_event_id(event: &Event): address {
-    uid_to_address(&event.id)
-  }
-
-  public fun get_event_creator(event: &Event): address {
-    event.creator
-  }
-
-  public fun get_offchain_event_id(event: &Event): String {
-    event.e_id
-  }
-
-  public fun get_available_seats(event: &Event): u32 {
-    event.n_tickets - event.event_capacity.tickets_sold
-  }
-
-  public fun get_ticket_type(event: &Event, index: u64): &TicketType {
-    vector::borrow(&event.ticket_types, index)
-  }
-
-  public fun get_ticket_type_id(ticket_type: &TicketType): address {
-    uid_to_address(&ticket_type.id)
-  }
-  
-  public fun get_ticket_type_sale_time(ticket_type: &TicketType): (u64, u64) {
-    (ticket_type.sale_start_time, ticket_type.sale_end_time)
-  }
-
-  /// Checks if the given seat index belongs to the seats assigned for the given ticket type
-  public fun get_seat_range(ticket_type: &TicketType): (u64, u64) {
-    (ticket_type.seat_range.from, ticket_type.seat_range.to)
-  }
-  
-  public fun get_seats(event: &Event): &Bitmap {
-    &event.event_capacity.seats
-  }
-
-  public fun get_ticket_type_mt_root(ticket_type: &TicketType): &vector<u8> {
-    &ticket_type.mt_root
   }
 
   public(friend) fun increment_tickets_sold(event: &mut Event) {
