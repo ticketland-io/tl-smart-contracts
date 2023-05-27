@@ -3,7 +3,7 @@ module ticketland::ticket {
   use sui::display;
   use std::vector;
   use sui::object::{Self, UID, uid_to_address};
-  use sui::transfer::{transfer, public_transfer, share_object};
+  use sui::transfer::{Self, public_transfer, share_object};
   use sui::tx_context::{TxContext, sender};
   use std::string::{utf8, String};
   use sui::vec_map::{Self, VecMap};
@@ -253,7 +253,7 @@ module ticketland::ticket {
       attached_nfts: object_bag::new(ctx),
     };
 
-    transfer(cnt, sender(ctx));
+    transfer::transfer(cnt, sender(ctx));
 
     cnt_id
   }
@@ -404,5 +404,11 @@ module ticketland::ticket {
 
   public(friend) fun set_attended(cnt: &mut CNT) {
     cnt.attended = true;
+  }
+
+  /// Used by friend modules to transfer the given CNT. CNT has not store ability
+  /// so any transfer must happen though this module.
+  public(friend) fun transfer(cnt: CNT, recipient: address) {
+    transfer::transfer(cnt, recipient);
   }
 }
