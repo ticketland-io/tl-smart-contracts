@@ -9,7 +9,9 @@ module ticketland::basic_sale {
   use ticketland::num_utils::{u64_to_str};
   use ticketland::event::{get_event_creator};
   use ticketland::event_registry::{Config, get_protocol_info};
-  use ticketland::sale_type::{FixedPrice, get_fixed_price_amount};
+  use ticketland::sale_type::{
+    FixedPrice, Refundable, get_fixed_price_amount, get_refundable_price_amount
+  };
   use ticketland::event::{
     Event, get_ticket_type, get_event_id, get_offchain_event_id, get_ticket_type_id, get_sale_type,
   };
@@ -86,20 +88,34 @@ module ticketland::basic_sale {
   }
 
   public(friend) entry fun refundable<T>(
-        event: &Event,
+    event: &Event,
     coins: &mut Coin<T>,
     ticket_type_index: u64,
     ticket_name: String,
     seat_index: u64,
     seat_name: String,
-    config: &Config,
     ctx: &mut TxContext
   ): (address, u64) {
     let ticket_type = get_ticket_type(event, ticket_type_index);
     let coin_type = type_name::into_string(type_name::get<Coin<T>>());
     let price = get_refundable_price_amount(
-      get_sale_type<FixedPrice>(event, ticket_type_index),
+      get_sale_type<Refundable>(event, ticket_type_index),
       coin_type,
     );
+
+    assert!(value(coins) >= price, E_INSUFFICIENT_BALANCE);
+
+    let cnt_id = ticket::mint_cnt(
+      get_event_id(event),
+      get_ticket_type_id(ticket_type),
+      get_offchain_event_id(event),
+      ticket_name,
+      u64_to_str(seat_index),
+      seat_name,
+      price,
+      ctx,
+    );
+
+    (cnt_id, price)
   }
 }
