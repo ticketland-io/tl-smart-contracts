@@ -118,4 +118,6 @@ module ticketland::basic_sale {
 
     (cnt_id, price)
   }
+
+  // public entry fun
 }

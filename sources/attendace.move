@@ -61,7 +61,7 @@ module ticketland::attendance {
   /// An operator can mark that the owner of a ticket(CNT) has attended an event. We can't directly update the
   /// CNT object since it is owned, we can only get an immutable reference. The owner of a CNT can later call
   /// confirm_attended to update that field
-  public fun set_attended(
+  public entry fun set_attended(
     cnt: &CNT,
     config: &mut Config,
     cap: &OperatorCap,
@@ -76,7 +76,7 @@ module ticketland::attendance {
 
   /// Called by the onwer of CNT to update the `attended` field of the CNT object.
   /// One of the operators must have called `set_attended` before for this function to succeed.
-  public fun confirm_attended(
+  public entry fun confirm_attended(
     cnt: &mut CNT,
     config: &mut Config,
   ) {
