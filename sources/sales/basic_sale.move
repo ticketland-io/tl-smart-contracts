@@ -5,7 +5,7 @@ module ticketland::basic_sale {
   use sui::transfer::{public_transfer};
   use std::type_name;
   use sui::coin::{Coin, value, split};
-  use ticketland::nft_ticket::{Self};
+  use ticketland::ticket::{Self};
   use ticketland::num_utils::{u64_to_str};
   use ticketland::event::{get_event_creator};
   use ticketland::event_registry::{Config, get_protocol_info};
@@ -33,7 +33,7 @@ module ticketland::basic_sale {
     let ticket_type = get_ticket_type(event, ticket_type_index);
     let price_sold = 0;
 
-    nft_ticket::mint_ticket(
+    ticket::mint_ticket(
       get_event_id(event),
       get_ticket_type_id(ticket_type),
       get_offchain_event_id(event),
@@ -71,7 +71,7 @@ module ticketland::basic_sale {
     public_transfer(split(coins, fees, ctx), protocol_fee_address);
     public_transfer(split(coins, payable_amount, ctx), get_event_creator(event));
 
-    let ticket_id = nft_ticket::mint_ticket(
+    let ticket_id = ticket::mint_ticket(
       get_event_id(event),
       get_ticket_type_id(ticket_type),
       get_offchain_event_id(event),

@@ -24,7 +24,7 @@ module ticketland::ticket {
   const E_NOT_EVENT_TICKET_TYPE: u64 = 3;
 
   /// One-Time-Witness for the module.
-  struct TICKET has drop {}
+  struct NFT_TICKET has drop {}
 
   /// A registrys NftTicketDetails that are used to utlimately mint new NftTickets
   struct NftRepository has key {
@@ -82,7 +82,7 @@ module ticketland::ticket {
     attached_nfts: ObjectBag,
   }
 
-  fun init(otw: TICKET, ctx: &mut TxContext) {
+  fun init(otw: NFT_TICKET, ctx: &mut TxContext) {
     let ticket_keys = vector[
       utf8(b"Event id"),
       utf8(b"Name"),

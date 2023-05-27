@@ -16,7 +16,7 @@ module ticketland::event {
   friend ticketland::event_registry;
   friend ticketland::sale_type;
   friend ticketland::primary_market;
-  friend ticketland::nft_ticket;
+  friend ticketland::ticket;
 
   /// constants
   const SALE_TYPE_KEY: vector<u8> = b"sale_type";
