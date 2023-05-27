@@ -322,6 +322,10 @@ module ticketland::event {
     uid_to_address(&event.id)
   }
 
+  public fun get_event_creator(event: &Event): address {
+    event.creator
+  }
+
   public fun get_offchain_event_id(event: &Event): String {
     event.e_id
   }

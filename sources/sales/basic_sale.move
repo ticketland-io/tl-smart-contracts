@@ -2,16 +2,25 @@
 module ticketland::basic_sale {
   use sui::tx_context::{TxContext};
   use std::string::{String};
+  use sui::transfer::{public_transfer};
   use std::type_name;
-  use sui::coin::{Coin};
+  use sui::coin::{Coin, value, split};
   use ticketland::nft_ticket::{Self};
   use ticketland::num_utils::{u64_to_str};
+  use ticketland::event::{get_event_creator};
+  use ticketland::event_registry::{Config, get_protocol_info};
   use ticketland::sale_type::{FixedPrice, get_fixed_price_amount};
   use ticketland::event::{
     Event, get_ticket_type, get_event_id, get_offchain_event_id, get_ticket_type_id, get_sale_type,
   };
 
   friend ticketland::primary_market;
+
+  /// Constants
+  const BASIS_POINTS: u64 = 10_000;
+
+  /// Errors
+  const E_INSUFFICIENT_BALANCE: u64 = 0;
 
   public(friend) entry fun free_sale(
     event: &Event,
@@ -43,17 +52,24 @@ module ticketland::basic_sale {
     ticket_name: String,
     seat_index: u64,
     seat_name: String,
+    config: &Config,
     ctx: &mut TxContext
-  ): (address, u256, u256) {
+  ): (address, u64, u64) {
     let ticket_type = get_ticket_type(event, ticket_type_index);
     let coin_type = type_name::into_string(type_name::get<Coin<T>>());
-    let amount = get_fixed_price_amount(
+    let price = get_fixed_price_amount(
       get_sale_type<FixedPrice>(event, ticket_type_index),
       coin_type,
     );
 
-    // TODO: calc fees and transfer funds from buyer to sellet and protocol recipient
-    let fees = 0;
+    assert!(value(coins) >= price, E_INSUFFICIENT_BALANCE);
+    let (protocol_fee, protocol_fee_address) = get_protocol_info(config);
+    let fees = (price * protocol_fee) / BASIS_POINTS;
+    let payable_amount = price - fees;
+
+    // tranfer funds
+    public_transfer(split(coins, fees, ctx), protocol_fee_address);
+    public_transfer(split(coins, payable_amount, ctx), get_event_creator(event));
 
     let ticket_id = nft_ticket::mint_ticket(
       get_event_id(event),
@@ -62,10 +78,10 @@ module ticketland::basic_sale {
       ticket_name,
       u64_to_str(seat_index),
       seat_name,
-      amount,
+      price,
       ctx,
     );
 
-    (ticket_id, amount, fees)
+    (ticket_id, price, fees)
   }
 }

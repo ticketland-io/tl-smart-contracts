@@ -15,33 +15,33 @@ module ticketland::sale_type {
   struct FixedPrice has store {
     /// A mapping from coin type to the price in that coin.  The coin type is the sui::type_name::TypeName
     /// of generic type T (i.e. Coin<T>)
-    price: VecMap<String, u256>
+    price: VecMap<String, u64>
   }
 
   struct Refundable has store {
     /// The actual price
-    price: VecMap<String, u256>,
+    price: VecMap<String, u64>,
   }
 
   struct EnglishAuction has store {
     /// starting price of the auction
-    start_price: VecMap<String, u256>,
+    start_price: VecMap<String, u64>,
     /// minimum bid increment
-    min_bid: u256,
+    min_bid: u64,
   }
 
   struct DutchAuction has store {
-    start_price: VecMap<String, u256>,
-    end_price: VecMap<String, u256>,
+    start_price: VecMap<String, u64>,
+    end_price: VecMap<String, u64>,
     curve_length: u16,
     drop_interval: u16,
   }
 
   fun create_price_vec_map(
     coin_types: vector<String>,
-    amounts: vector<u256>,
+    amounts: vector<u64>,
     config: &Config,
-  ): VecMap<String, u256> {
+  ): VecMap<String, u64> {
     let len = vector::length(&coin_types);
     assert!(len == vector::length(&amounts), E_LEN_MISMATCH);
 
@@ -73,7 +73,7 @@ module ticketland::sale_type {
     event: &mut Event,
     ticket_type_index: u64,
     coin_types: vector<String>,
-    amounts: vector<u256>,
+    amounts: vector<u64>,
     config: &Config,
     clock: &Clock,
     _cap: &EventOrganizerCap,
@@ -89,7 +89,7 @@ module ticketland::sale_type {
     event: &mut Event,
     ticket_type_index: u64,
     coin_types: vector<String>,
-    amounts: vector<u256>,
+    amounts: vector<u64>,
     config: &Config,
     clock: &Clock,
     _cap: &EventOrganizerCap,
@@ -106,8 +106,8 @@ module ticketland::sale_type {
     event: &mut Event,
     ticket_type_index: u64,
     coin_types: vector<String>,
-    start_prices: vector<u256>,
-    min_bid: u256,
+    start_prices: vector<u64>,
+    min_bid: u64,
     config: &Config,
     clock: &Clock,
     _cap: &EventOrganizerCap,
@@ -124,8 +124,8 @@ module ticketland::sale_type {
     event: &mut Event,
     ticket_type_index: u64,
     coin_types: vector<String>,
-    start_prices: vector<u256>,
-    end_prices: vector<u256>,
+    start_prices: vector<u64>,
+    end_prices: vector<u64>,
     curve_length: u16,
     drop_interval: u16,
     config: &Config,
@@ -142,7 +142,7 @@ module ticketland::sale_type {
     add_sale_type(sale_type, event, ticket_type_index, clock);
   }
 
-  public fun get_fixed_price_amount(fixed_price: &FixedPrice, coin_type: String): u256 {
+  public fun get_fixed_price_amount(fixed_price: &FixedPrice, coin_type: String): u64 {
     *vec_map::get(&fixed_price.price, &coin_type)
   }
 }

@@ -73,7 +73,7 @@ module ticketland::nft_ticket {
     /// The name of the ticket
     name: String,
     /// The price this ticket was sold for
-    price_sold: u256,
+    price_sold: u64,
     /// Seat Index
     seat_index: String,
     /// The seat name
@@ -222,7 +222,7 @@ module ticketland::nft_ticket {
     name: String,
     seat_index: String,
     seat_name: String,
-    price_sold: u256,
+    price_sold: u64,
     ctx: &mut TxContext,
   ): address {
     let id = object::new(ctx);

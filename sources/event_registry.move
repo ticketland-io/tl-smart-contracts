@@ -42,6 +42,10 @@ module ticketland::event_registry {
     share_object(config);
   }
 
+  public fun get_protocol_info(config: &Config): (u64, address) {
+    (config.protocol_fee, config.protocol_fee_address)
+  }
+
   /// Allows admin to update the configs
   public entry fun update_config(
     _cap: &AdminCap,

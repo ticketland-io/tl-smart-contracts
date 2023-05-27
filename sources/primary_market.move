@@ -8,6 +8,7 @@ module ticketland::primary_market {
   use ticketland::bitmap;
   use ticketland::merkle_tree;
   use ticketland::num_utils::{u64_to_str};
+  use ticketland::event_registry::Config;
   use ticketland::basic_sale;
   use ticketland::event::{
     Event, get_ticket_type, get_ticket_type_sale_time, get_available_seats, get_seat_range, get_seats,
@@ -23,8 +24,8 @@ module ticketland::primary_market {
   // Events
   struct TicketPurchased has copy, drop {
     ticket_id: address,
-    price: u256,
-    fees: u256,
+    price: u64,
+    fees: u64,
     buyer: address,
     sale_type: String,
   }
@@ -108,6 +109,7 @@ module ticketland::primary_market {
     seat_index: u64,
     seat_name: String,
     proof: vector<vector<u8>>,
+    config: &Config,
     clock: &Clock,
     ctx: &mut TxContext
   ) {
@@ -121,6 +123,7 @@ module ticketland::primary_market {
       ticket_name,
       seat_index,
       seat_name,
+      config,
       ctx,
     );
     post_purchase(event, seat_index);
