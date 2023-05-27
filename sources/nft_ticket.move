@@ -1,7 +1,6 @@
 module ticketland::nft_ticket {
   use sui::package;
   use sui::display;
-  use sui::address;
   use std::vector;
   use sui::object::{Self, UID, uid_to_address};
   use sui::transfer::{transfer, public_transfer, share_object};
@@ -10,7 +9,7 @@ module ticketland::nft_ticket {
   use sui::vec_map::{Self, VecMap};
   use sui::object_bag::{Self, ObjectBag};
   use ticketland::event::{
-    Self, Event, EventOrganizerCap, event_organizer_cap_into_event_id, is_event_ticket_type,
+    Event, EventOrganizerCap, event_organizer_cap_into_event_id, is_event_ticket_type,
   };
 
   friend ticketland::primary_market;
@@ -22,6 +21,7 @@ module ticketland::nft_ticket {
   const E_PROPERTY_VEC_MISMATCH: u64 = 0;
   const E_WRONG_TICKET_TYPE: u64 = 1;
   const E_WRONG_EVENT: u64 = 2;
+  const E_NOT_EVENT_TICKET_TYPE: u64 = 3;
 
   /// One-Time-Witness for the module.
   struct NFT_TICKET has drop {}
@@ -143,7 +143,7 @@ module ticketland::nft_ticket {
     ticket_type_id: address,
     nft_repository: &mut NftRepository,
   ): &mut VecMap<String, NftTicketDetails> {
-    /// Init all nested VecMaps where needed
+    // Init all nested VecMaps where needed
     if(vec_map::contains(&nft_repository.nfts_per_ticket_type, &event_id)) {
       let l2_map = vec_map::get_mut(&mut nft_repository.nfts_per_ticket_type, &event_id);
 
@@ -187,8 +187,6 @@ module ticketland::nft_ticket {
     image_uri: String,
     property_keys: vector<String>,
     property_values: vector<String>,
-    nft_repository: &mut NftRepository,
-    event: &Event,
     cap: &EventOrganizerCap,
   ): (address, NftTicketDetails) {
     let len = vector::length(&property_keys);
@@ -275,14 +273,14 @@ module ticketland::nft_ticket {
     event: &Event,
     cap: &EventOrganizerCap,
   ) {
+    assert!(is_event_ticket_type(event, ticket_type_id), E_NOT_EVENT_TICKET_TYPE);
+
     let (event_id, nft_details) = create_nft_details(
       name,
       description,
       image_uri,
       property_keys,
       property_values,
-      nft_repository,
-      event,
       cap,
     );
 
@@ -299,7 +297,6 @@ module ticketland::nft_ticket {
     property_keys: vector<String>,
     property_values: vector<String>,
     nft_repository: &mut NftRepository,
-    event: &Event,
     cap: &EventOrganizerCap,
   ) {
     let (event_id, nft_details) = create_nft_details(
@@ -308,8 +305,6 @@ module ticketland::nft_ticket {
       image_uri,
       property_keys,
       property_values,
-      nft_repository,
-      event,
       cap,
     );
 

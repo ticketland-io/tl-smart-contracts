@@ -1,5 +1,4 @@
 module ticketland::primary_market {
-  use sui::object::{Self, UID, ID};
   use std::vector;
   use sui::clock::{Self, Clock};
   use sui::tx_context::{TxContext, sender};
@@ -8,12 +7,11 @@ module ticketland::primary_market {
   use ticketland::bitmap;
   use ticketland::merkle_tree;
   use ticketland::num_utils::{u64_to_str};
-  use ticketland::nft_ticket::{Self, Ticket};
-  use ticketland::sale_type::Free;
+  use ticketland::nft_ticket::{Self};
   use ticketland::event::{
     Event, get_ticket_type, get_ticket_type_sale_time, get_available_seats, get_seat_range, get_seats,
     get_ticket_type_mt_root, update_seats, increment_tickets_sold, get_event_id, get_offchain_event_id,
-    get_sale_type, get_ticket_type_id,
+    get_ticket_type_id,
   };
 
   /// Erros
