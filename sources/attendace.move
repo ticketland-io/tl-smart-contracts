@@ -3,8 +3,12 @@ module ticketland::attendance {
   use sui::object::{Self, UID};
   use sui::transfer::{share_object};
   use sui::vec_map::{Self, VecMap};
+  use ticketland::ticket::{CNT, get_cnt_id, get_cnt_event_id};
 
   friend ticketland::event_registry;
+
+  /// Error
+  const E_UNAUTHORIZED: u64 = 0;
 
   struct OperatorCap has key, store {
     id: UID,
@@ -38,8 +42,15 @@ module ticketland::attendance {
     }
   }
 
-  public fun set_attended(config: &mut Config, cap: &OperatorCap) {
-    let event_id = cap.event_id;
-    vec_map::insert(&mut config.attendace, event_id, true);
+  /// An operator can mark that the owner of a ticket(CNT) has attended an event. We can't directly update the
+  /// CNT object since it is owned, we can only get an immutable reference. The owner of a CNT can later call
+  /// confirm_attended to update that field
+  public fun set_attended(
+    cnt: &CNT,
+    config: &mut Config,
+    cap: &OperatorCap,
+  ) {
+    assert!(get_cnt_event_id(cnt) == cap.event_id, E_UNAUTHORIZED);
+    vec_map::insert(&mut config.attendace, get_cnt_id(cnt), true);
   }
 }

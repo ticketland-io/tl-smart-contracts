@@ -392,4 +392,12 @@ module ticketland::ticket {
 
     create_and_attach_ticket(nft_details, cnt, ctx);
   }
+
+  public fun get_cnt_id(cnt: &CNT): address {
+    uid_to_address(&cnt.id)
+  }
+
+  public fun get_cnt_event_id(cnt: &CNT): address {
+    cnt.event_id
+  }
 }
