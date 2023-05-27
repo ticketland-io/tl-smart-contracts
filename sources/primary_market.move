@@ -23,7 +23,7 @@ module ticketland::primary_market {
 
   // Events
   struct TicketPurchased has copy, drop {
-    ticket_id: address,
+    cnt_id: address,
     price: u64,
     fees: u64,
     buyer: address,
@@ -89,11 +89,11 @@ module ticketland::primary_market {
     let buyer = sender(ctx);
 
     pre_purchase(event, ticket_type_index, seat_index, seat_name, proof, clock);
-    let ticket_id = basic_sale::free_sale(event, ticket_type_index, ticket_name, seat_index, seat_name, ctx);
+    let cnt_id = basic_sale::free_sale(event, ticket_type_index, ticket_name, seat_index, seat_name, ctx);
     post_purchase(event, seat_index);
 
     emit(TicketPurchased {
-      ticket_id,
+      cnt_id,
       price: 0,
       fees: 0,
       buyer,
@@ -116,7 +116,7 @@ module ticketland::primary_market {
     let buyer = sender(ctx);
 
     pre_purchase(event, ticket_type_index, seat_index, seat_name, proof, clock);
-    let (ticket_id, price, fees) = basic_sale::fixed_price(
+    let (cnt_id, price, fees) = basic_sale::fixed_price(
       event,
       coins,
       ticket_type_index,
@@ -129,7 +129,7 @@ module ticketland::primary_market {
     post_purchase(event, seat_index);
 
     emit(TicketPurchased {
-      ticket_id,
+      cnt_id,
       price,
       fees,
       buyer,

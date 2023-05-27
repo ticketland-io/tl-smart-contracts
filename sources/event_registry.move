@@ -5,7 +5,7 @@ module ticketland::event_registry {
   use std::vector;
   use sui::object::{Self, UID};
   use std::ascii;
-  use sui::event;
+  use sui::event::{emit};
   use sui::transfer::{transfer, public_transfer, share_object};
   use ticketland::attendance::{create_op_cap};
   use ticketland::event as tl_event;
@@ -76,7 +76,7 @@ module ticketland::event_registry {
       i = i + 1;
     };
 
-    event::emit(ConfigUpdated {});
+    emit(ConfigUpdated {});
   }
 
   /// Allows anyone to create a new event

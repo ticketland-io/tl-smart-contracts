@@ -226,7 +226,7 @@ module ticketland::ticket {
     ctx: &mut TxContext,
   ): address {
     let id = object::new(ctx);
-    let ticket_id = uid_to_address(&id);
+    let cnt_id = uid_to_address(&id);
 
     let ticket = Ticket {
       id,
@@ -242,7 +242,7 @@ module ticketland::ticket {
 
     transfer(ticket, sender(ctx));
 
-    ticket_id
+    cnt_id
   }
 
   /// Allows the event organizer to register new (or update existing) Ticket NFT descriptions. Any arbitraty number

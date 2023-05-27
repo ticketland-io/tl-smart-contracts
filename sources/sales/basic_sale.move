@@ -71,7 +71,7 @@ module ticketland::basic_sale {
     public_transfer(split(coins, fees, ctx), protocol_fee_address);
     public_transfer(split(coins, payable_amount, ctx), get_event_creator(event));
 
-    let ticket_id = ticket::mint_cnt(
+    let cnt_id = ticket::mint_cnt(
       get_event_id(event),
       get_ticket_type_id(ticket_type),
       get_offchain_event_id(event),
@@ -82,6 +82,6 @@ module ticketland::basic_sale {
       ctx,
     );
 
-    (ticket_id, price, fees)
+    (cnt_id, price, fees)
   }
 }

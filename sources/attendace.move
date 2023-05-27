@@ -3,6 +3,7 @@ module ticketland::attendance {
   use sui::object::{Self, UID};
   use sui::transfer::{share_object};
   use sui::vec_map::{Self, VecMap};
+  use sui::event::{emit};
   use ticketland::ticket::{Self, CNT, get_cnt_id, get_cnt_event_id};
 
   friend ticketland::event_registry;
@@ -20,6 +21,16 @@ module ticketland::attendance {
     id: UID,
     /// cnt id (as address) => attended the event?
     attendace: VecMap<address, bool>,
+  }
+
+
+  // Events
+  struct SetAttended has copy, drop {
+    cnt_id: address,
+  }
+
+  struct ConfirmAttended has copy, drop {
+    cnt_id: address,
   }
 
   fun init(ctx: &mut TxContext) {
@@ -52,7 +63,11 @@ module ticketland::attendance {
     cap: &OperatorCap,
   ) {
     assert!(get_cnt_event_id(cnt) == cap.event_id, E_UNAUTHORIZED);
-    vec_map::insert(&mut config.attendace, get_cnt_id(cnt), true);
+    
+    let cnt_id = get_cnt_id(cnt);
+    vec_map::insert(&mut config.attendace, cnt_id, true);
+
+    emit(SetAttended {cnt_id});
   }
 
   /// Called by the onwer of CNT to update the `attended` field of the CNT object.
@@ -61,9 +76,11 @@ module ticketland::attendance {
     cnt: &mut CNT,
     config: &mut Config,
   ) {
-    let has_attended = *vec_map::get(&config.attendace, &get_cnt_id(cnt));
+    let cnt_id = get_cnt_id(cnt);
+    let has_attended = *vec_map::get(&config.attendace, &cnt_id);
     assert!(has_attended, E_DID_NOT_ATTEND);
 
     ticket::set_attended(cnt);
+    emit(ConfirmAttended {cnt_id})
   }
 }
