@@ -79,6 +79,8 @@ module ticketland::ticket {
     seat_index: String,
     /// The seat name
     seat_name: String,
+    /// indicates if the owner has attended the event
+    attended: bool,
     /// All attached NFT tickets
     attached_nfts: ObjectBag,
   }
@@ -238,6 +240,7 @@ module ticketland::ticket {
       seat_index,
       seat_name,
       price_sold,
+      attended: false,
       attached_nfts: object_bag::new(ctx),
     };
 
