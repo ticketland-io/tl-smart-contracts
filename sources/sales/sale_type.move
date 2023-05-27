@@ -82,4 +82,8 @@ module ticketland::sale_type {
     let sale_type = DutchAuction {start_price, end_price, curve_length, drop_interval};
     add_sale_type(sale_type, event, ticket_type_index, clock);
   }
+
+  public fun get_fixed_price_amount(fixed_price: &FixedPrice): u256 {
+    fixed_price.amount
+  }
 }

@@ -22,7 +22,7 @@ module ticketland::primary_market {
   // Events
   struct TicketPurchased has copy, drop {
     ticket_id: address,
-    price: u32,
+    price: u256,
     buyer: address,
     sale_type: String,
   }
@@ -92,6 +92,30 @@ module ticketland::primary_market {
     emit(TicketPurchased {
       ticket_id,
       price: 0,
+      buyer,
+      sale_type: utf8(b"free"),
+    });
+  }
+
+  public entry fun fixed_price(
+    event: &mut Event,
+    ticket_type_index: u64,
+    ticket_name: String,
+    seat_index: u64,
+    seat_name: String,
+    proof: vector<vector<u8>>,
+    clock: &Clock,
+    ctx: &mut TxContext
+  ) {
+    let buyer = sender(ctx);
+
+    pre_purchase(event, ticket_type_index, seat_index, seat_name, proof, clock);
+    let (ticket_id, price) = basic_sale::fixed_price(event, ticket_type_index, ticket_name, seat_index, seat_name, ctx);
+    post_purchase(event, seat_index);
+
+    emit(TicketPurchased {
+      ticket_id,
+      price,
       buyer,
       sale_type: utf8(b"free"),
     });
