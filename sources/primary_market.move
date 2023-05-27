@@ -133,7 +133,41 @@ module ticketland::primary_market {
       price,
       fees,
       buyer,
-      sale_type: utf8(b"free"),
+      sale_type: utf8(b"fixed_price"),
+    });
+  }
+
+  public entry fun refundable<T>(
+    event: &mut Event,
+    coins: &mut Coin<T>,
+    ticket_type_index: u64,
+    ticket_name: String,
+    seat_index: u64,
+    seat_name: String,
+    proof: vector<vector<u8>>,
+    clock: &Clock,
+    ctx: &mut TxContext
+  ) {
+    let buyer = sender(ctx);
+
+    pre_purchase(event, ticket_type_index, seat_index, seat_name, proof, clock);
+    let (cnt_id, price) = basic_sale::refundable(
+      event,
+      coins,
+      ticket_type_index,
+      ticket_name,
+      seat_index,
+      seat_name,
+      ctx,
+    );
+    post_purchase(event, seat_index);
+
+    emit(TicketPurchased {
+      cnt_id,
+      price,
+      fees: 0,
+      buyer,
+      sale_type: utf8(b"refundable"),
     });
   }
 }
