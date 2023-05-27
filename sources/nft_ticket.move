@@ -66,6 +66,8 @@ module ticketland::nft_ticket {
     id: UID,
     /// The on-chain id of the event (as address)
     event_id: address,
+    /// The ticket type id (as address)
+    ticket_type_id: address,
     /// The off-chain event id
     e_id: String,
     /// The name of the ticket
@@ -179,7 +181,7 @@ module ticketland::nft_ticket {
   }
 
   /// Internal function that will create a new NftTicketDetails
-  entry fun create_nft_details(
+  fun create_nft_details(
     name: String,
     description: String,
     image_uri: String,
@@ -217,6 +219,7 @@ module ticketland::nft_ticket {
   /// Mints the root Ticket Object
   public(friend) fun mint_ticket(
     event_id: address,
+    ticket_type_id: address,
     e_id: String,
     name: String,
     seat_index: String,
@@ -227,6 +230,7 @@ module ticketland::nft_ticket {
     Ticket {
       id: object::new(ctx),
       event_id,
+      ticket_type_id,
       e_id,
       name,
       seat_index,
@@ -306,30 +310,12 @@ module ticketland::nft_ticket {
     vec_map::insert(event_nfts, nft_ref_name, nft_details);
   }
 
-  /// Allows the owner of the given Ticket to mint a new NftTicket from the NftRepository.
-  /// 
-  /// # Arguments
-  /// 
-  /// * `event_id` - The id of the Event object in address format
-  /// * `ticket_type_id` - The id of the TicketType object in address format
-  /// * `nft_ref_name` - The reference name of the NFT that is being registered. This is used as a key in VecMap for quick access
-  /// * `nft_repository` - The nft repository where the NFT details are stored
-  /// * `ticket` - The Ticket object that will get this newly minted NftTicket attached to
-  public entry fun mint_nft_ticket(
-    event_id: address,
-    ticket_type_id: address,
-    nft_ref_name: String,
-    nft_repository: &mut NftRepository,
+  /// Creates a new NFT and attaches to the Ticket object
+  fun create_and_attach_ticket(
+    nft_details: &NftTicketDetails,
     ticket: &mut Ticket,
     ctx: &mut TxContext,
   ) {
-    assert!(ticket.event_id == event_id, E_WRONG_EVENT);
-
-    let nfts_per_ticket_type = vec_map::get(&nft_repository.nfts_per_ticket_type, &event_id);
-    let nft_details = vec_map::get(
-      vec_map::get(nfts_per_ticket_type, &ticket_type_id),
-      &nft_ref_name,
-    );
     // Copy the properties vec map
     let properties = vec_map::empty<String, String>();
     let keys = vec_map::keys(&nft_details.properties);
@@ -354,5 +340,34 @@ module ticketland::nft_ticket {
     // Attach to the Ticket. Will fail if there's already a ticket with such nft_details attached. This guarantees
     // on ticket claim (for a given ticket type) per each Ticket
     object_bag::add(&mut ticket.attached_nfts, *nft_details, nft_ticket);
+  }
+
+  /// Allows the owner of the given Ticket to mint a new NftTicket from the NftRepository.
+  /// 
+  /// # Arguments
+  /// 
+  /// * `event_id` - The id of the Event object in address format
+  /// * `ticket_type_id` - The id of the TicketType object in address format
+  /// * `nft_ref_name` - The reference name of the NFT that is being registered. This is used as a key in VecMap for quick access
+  /// * `nft_repository` - The nft repository where the NFT details are stored
+  /// * `ticket` - The Ticket object that will get this newly minted NftTicket attached to
+  public entry fun mint_nft_ticket_for_ticket_type(
+    event_id: address,
+    ticket_type_id: address,
+    nft_ref_name: String,
+    nft_repository: &mut NftRepository,
+    ticket: &mut Ticket,
+    ctx: &mut TxContext,
+  ) {
+    assert!(ticket.event_id == event_id, E_WRONG_EVENT);
+    assert!(ticket.ticket_type_id == ticket_type_id, E_WRONG_TICKET_TYPE);
+
+    let nfts_per_ticket_type = vec_map::get(&nft_repository.nfts_per_ticket_type, &event_id);
+    let nft_details = vec_map::get(
+      vec_map::get(nfts_per_ticket_type, &ticket_type_id),
+      &nft_ref_name,
+    );
+
+    create_and_attach_ticket(nft_details, ticket, ctx);
   }
 }
