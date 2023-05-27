@@ -12,7 +12,7 @@ module ticketland::nft_ticket {
     Event, EventOrganizerCap, event_organizer_cap_into_event_id, is_event_ticket_type,
   };
 
-  friend ticketland::primary_market;
+  friend ticketland::basic_sale;
 
   /// constants
   const MAX_NFT_PER_TICKET_TYPE: u64 = 10;
