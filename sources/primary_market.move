@@ -84,8 +84,6 @@ module ticketland::primary_market {
     ctx: &mut TxContext
   ) {
     let ticket_type = get_ticket_type(event, ticket_type_index);
-    let free_sale_type = get_sale_type<Free>(event, ticket_type_index);
-    let price_sold = 0;
 
     nft_ticket::mint_ticket(
       get_event_id(event),
@@ -94,7 +92,7 @@ module ticketland::primary_market {
       ticket_name,
       u64_to_str(seat_index),
       seat_name,
-      price_sold,
+      price_sold: 0,
       ctx,
     );
   }
