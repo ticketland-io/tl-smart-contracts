@@ -14,13 +14,13 @@ module ticketland::attendance {
   struct Config has key {
     id: UID,
     /// cnt id (as address) => attended the event?
-    cnts: VecMap<address, bool>,
+    attendace: VecMap<address, bool>,
   }
 
   fun init(ctx: &mut TxContext) {
     let attendance = Config {
       id: object::new(ctx),
-      cnts: vec_map::empty(),
+      attendace: vec_map::empty(),
     };
 
     share_object(attendance);
@@ -36,5 +36,10 @@ module ticketland::attendance {
       id: object::new(ctx),
       event_id,
     }
+  }
+
+  public fun set_attended(config: &mut Config, cap: &OperatorCap) {
+    let event_id = cap.event_id;
+    vec_map::insert(&mut config.attendace, event_id, true);
   }
 }
