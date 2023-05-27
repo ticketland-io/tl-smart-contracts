@@ -61,18 +61,19 @@ module ticketland::ticket {
     properties: VecMap<String, String>,
   }
 
-  // This is the core Ticket. It's a compound NFT meaming that it consists of everal other NftTicket attached to it.
-  struct Ticket has key {
+  // This is the core Compound NFT Ticket Object. It's a compound NFT meaming that it consists of everal
+  // other NftTicket attached to it.
+  struct CNT has key {
     id: UID,
     /// The on-chain id of the event (as address)
     event_id: address,
-    /// The ticket type id (as address)
+    /// The CNT type id (as address)
     ticket_type_id: address,
     /// The off-chain event id
     e_id: String,
-    /// The name of the ticket
+    /// The name of the CNT
     name: String,
-    /// The price this ticket was sold for
+    /// The price this CNT was sold for
     price_sold: u64,
     /// Seat Index
     seat_index: String,
@@ -114,7 +115,7 @@ module ticketland::ticket {
     ];
 
     let publisher = package::claim(otw, ctx);
-    let d1 = display::new_with_fields<Ticket>(&publisher, ticket_keys, ticket_values, ctx);
+    let d1 = display::new_with_fields<CNT>(&publisher, ticket_keys, ticket_values, ctx);
     let d2 = display::new_with_fields<NftTicket>(&publisher, nft_keys, nft_values, ctx);
 
     // Commit first version of `Display` to apply changes.
@@ -214,8 +215,8 @@ module ticketland::ticket {
     (event_id, nft_detail)
   }
 
-  /// Mints the root Ticket Object
-  public(friend) fun mint_ticket(
+  /// Mints the root CNT Object
+  public(friend) fun mint_cnt(
     event_id: address,
     ticket_type_id: address,
     e_id: String,
@@ -226,9 +227,9 @@ module ticketland::ticket {
     ctx: &mut TxContext,
   ): address {
     let id = object::new(ctx);
-    let ticket_id = uid_to_address(&id);
+    let cnt_id = uid_to_address(&id);
 
-    let ticket = Ticket {
+    let cnt = CNT {
       id,
       event_id,
       ticket_type_id,
@@ -240,13 +241,13 @@ module ticketland::ticket {
       attached_nfts: object_bag::new(ctx),
     };
 
-    transfer(ticket, sender(ctx));
+    transfer(cnt, sender(ctx));
 
-    ticket_id
+    cnt_id
   }
 
   /// Allows the event organizer to register new (or update existing) Ticket NFT descriptions. Any arbitraty number
-  /// of such NFTS can be created. Once description added, Ticket object owners can claim a new NFT in a subsequent call.
+  /// of such NFTS can be created. Once description added, CNT object owners can claim a new NFT in a subsequent call.
   /// It will fail if `nft_ref_name` has been already registered
   /// 
   /// # Arguments
@@ -312,10 +313,10 @@ module ticketland::ticket {
     vec_map::insert(event_nfts, nft_ref_name, nft_details);
   }
 
-  /// Creates a new NFT and attaches to the Ticket object
+  /// Creates a new NFT and attaches to the CNT object
   fun create_and_attach_ticket(
     nft_details: &NftTicketDetails,
-    ticket: &mut Ticket,
+    cnt: &mut CNT,
     ctx: &mut TxContext,
   ) {
     // Copy the properties vec map
@@ -339,9 +340,9 @@ module ticketland::ticket {
       properties,
     };
 
-    // Attach to the Ticket. Will fail if there's already a ticket with such nft_details attached. This guarantees
+    // Attach to the Ticket. Will fail if there's already a cnt with such nft_details attached. This guarantees
     // on ticket claim (for a given ticket type) per each Ticket
-    object_bag::add(&mut ticket.attached_nfts, *nft_details, nft_ticket);
+    object_bag::add(&mut cnt.attached_nfts, *nft_details, nft_ticket);
   }
 
   /// Allows the owner of the given Ticket to mint a new NftTicket from the NftRepository.
@@ -358,11 +359,11 @@ module ticketland::ticket {
     ticket_type_id: address,
     nft_ref_name: String,
     nft_repository: &mut NftRepository,
-    ticket: &mut Ticket,
+    cnt: &mut CNT,
     ctx: &mut TxContext,
   ) {
-    assert!(ticket.event_id == event_id, E_WRONG_EVENT);
-    assert!(ticket.ticket_type_id == ticket_type_id, E_WRONG_TICKET_TYPE);
+    assert!(cnt.event_id == event_id, E_WRONG_EVENT);
+    assert!(cnt.ticket_type_id == ticket_type_id, E_WRONG_TICKET_TYPE);
 
     let nfts_per_ticket_type = vec_map::get(&nft_repository.nfts_per_ticket_type, &event_id);
     let nft_details = vec_map::get(
@@ -370,7 +371,7 @@ module ticketland::ticket {
       &nft_ref_name,
     );
 
-    create_and_attach_ticket(nft_details, ticket, ctx);
+    create_and_attach_ticket(nft_details, cnt, ctx);
   }
 
   /// Same as mint_nft_ticket_for_ticket_type but for NFTs claimable on the event level
@@ -378,14 +379,14 @@ module ticketland::ticket {
     event_id: address,
     nft_ref_name: String,
     nft_repository: &mut NftRepository,
-    ticket: &mut Ticket,
+    cnt: &mut CNT,
     ctx: &mut TxContext,
   ) {
-    assert!(ticket.event_id == event_id, E_WRONG_EVENT);
+    assert!(cnt.event_id == event_id, E_WRONG_EVENT);
 
     let nfts_per_event = vec_map::get(&nft_repository.nfts_per_event, &event_id);
     let nft_details = vec_map::get(nfts_per_event, &nft_ref_name,);
 
-    create_and_attach_ticket(nft_details, ticket, ctx);
+    create_and_attach_ticket(nft_details, cnt, ctx);
   }
 }

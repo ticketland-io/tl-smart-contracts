@@ -215,7 +215,7 @@ module ticketland::ticket {
   }
 
   /// Mints the root Ticket Object
-  public(friend) fun mint_ticket(
+  public(friend) fun mint_cnt(
     event_id: address,
     ticket_type_id: address,
     e_id: String,
