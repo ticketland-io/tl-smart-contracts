@@ -6,7 +6,8 @@ module ticketland::event_registry {
   use sui::object::{Self, UID};
   use std::ascii;
   use sui::event;
-  use sui::transfer::{transfer, share_object};
+  use sui::transfer::{transfer, public_transfer, share_object};
+  use ticketland::attendance::{create_op_cap};
   use ticketland::event as tl_event;
 
   /// Capability allowing the bearer to execute admin related tasks
@@ -20,6 +21,8 @@ module ticketland::event_registry {
     protocol_fee: u64,
     /// The address that will be receiving those fees
     protocol_fee_address: address,
+    /// A list of operators that can get access to various functions like setting attendance for CNTs
+    operators: vector<address>,
   }
 
   // Events
@@ -36,6 +39,7 @@ module ticketland::event_registry {
       supported_coins: vec_map::empty(),
       protocol_fee: 0,
       protocol_fee_address: sender(ctx),
+      operators: vector[],
     };
 
     transfer(admin_cap, sender(ctx));
@@ -53,12 +57,14 @@ module ticketland::event_registry {
     supported_coins: vector<ascii::String>,
     protocol_fee: u64,
     protocol_fee_address: address,
+    operators: vector<address>,
     _ctx: &mut TxContext,
   ) {
     // reset old vec_map
     config.supported_coins = vec_map::empty();
     config.protocol_fee = protocol_fee;
     config.protocol_fee_address = protocol_fee_address;
+    config.operators = operators;
 
     let len = vector::length(&supported_coins);
     let i = 0;
@@ -77,21 +83,26 @@ module ticketland::event_registry {
   /// 
   /// # Arguments
   /// 
-  /// * `n_tickets` - Total number of tickets
-  /// * `start_time` - Start of the event
-  /// * `end_time` - End time of the event
+  /// * `e_id` - The off-chain event id
+  /// * `name` - The event name
+  /// * `description` - The event description
+  /// * `image_uri` - The event image uri
+  /// * `n_tickets` - The number of ticket available for this event
+  /// * `start_time` - The event start time
+  /// * `end_time` - The event end time
   public(friend) entry fun create_event(
-    event_id: String,
+    e_id: String,
     name: String,
     description: String,
     image_uri: String,
     n_tickets: u32,
     start_time: u64,
     end_time: u64,
+    config: &Config,
     ctx: &mut TxContext
   ) {
-    tl_event::create_event(
-      event_id,
+    let event_id = tl_event::create_event(
+      e_id,
       name,
       description,
       image_uri,
@@ -100,6 +111,18 @@ module ticketland::event_registry {
       end_time,
       ctx,
     );
+
+    // create an attendance operator_cap. Ticketland is the default operator
+    let len = vector::length(&config.operators);
+    let i = 0;
+
+    while (i < len) {
+      let operator = *vector::borrow(&config.operators, i);  
+      let operator_cap = create_op_cap(event_id, ctx);
+
+      public_transfer(operator_cap, operator);
+      i = i + 1;
+    }
   }
 
   public fun is_coin_supported(config: &Config, coin_type: &ascii::String): bool {

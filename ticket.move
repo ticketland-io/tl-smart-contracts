@@ -9,7 +9,7 @@ module ticketland::ticket {
   use sui::vec_map::{Self, VecMap};
   use sui::object_bag::{Self, ObjectBag};
   use ticketland::event::{
-    Event, EventOrganizerCap, event_organizer_cap_into_event_id, is_event_ticket_type,
+    Event, EventOrganizerCap, get_event_organizer_cap_event_id, is_event_ticket_type,
   };
 
   friend ticketland::basic_sale;
@@ -192,7 +192,7 @@ module ticketland::ticket {
     let len = vector::length(&property_keys);
     assert!(len == vector::length(&property_values), E_PROPERTY_VEC_MISMATCH);
 
-    let event_id = event_organizer_cap_into_event_id(cap);
+    let event_id = get_event_organizer_cap_event_id(cap);
     let properties = vec_map::empty<String, String>();
     let i = 0;
 

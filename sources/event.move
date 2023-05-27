@@ -1,7 +1,7 @@
 module ticketland::event {
   use sui::package;
   use sui::display;
-  use sui::object::{Self, UID, ID, uid_to_inner, uid_to_address};
+  use sui::object::{Self, UID, uid_to_address};
   use sui::tx_context::{TxContext, sender};
   use std::string::{utf8, String};
   use sui::clock::{Self, Clock};
@@ -30,6 +30,12 @@ module ticketland::event {
   /// One-Time-Witness for the module.
   struct EVENT has drop {}
 
+  // Cap that allow the bearer to manage events. It has store ability because we want free native transfers on this object
+  struct EventOrganizerCap has key, store {
+    id: UID,
+    event_id: address,
+  }
+
   struct NftEvent has key {
     id: UID,
     /// The off-chain event id
@@ -44,19 +50,13 @@ module ticketland::event {
     properties: VecMap<String, String>
   }
 
-  // Cap that allow the bearer to manage events. It has store ability because we want free native transfers on this object
-  struct EventOrganizerCap has key, store {
-    id: UID,
-    event_id: address,
-  }
-
   // THe shared event object
   struct Event has key {
     id: UID,
     /// The off-chain event id
     e_id: String, 
     /// The id of the NftEvent associated with this event
-    event_nft_id: ID,
+    event_nft_id: address,
     /// The event creator
     creator: address,
     /// Total number of issued tickets
@@ -109,12 +109,12 @@ module ticketland::event {
 
   // Events
   struct EventCreated has copy, drop {
-    id: ID,
+    id: address,
     creator: address,
   }
 
   struct EventNftCreated has copy, drop {
-    id: ID,
+    id: address,
     creator: address,
   }
 
@@ -157,7 +157,17 @@ module ticketland::event {
     }
   }
 
-  /// Create a new shared Event object and the onwed by the event creator NftEvent object
+  /// Create a new shared Event object and the owned by the event creator NftEvent object
+  /// 
+  /// # Arguments
+  /// 
+  /// * `e_id` - The off-chain event id
+  /// * `name` - The event name
+  /// * `description` - The event description
+  /// * `image_uri` - The event image uri
+  /// * `n_tickets` - The number of ticket available for this event
+  /// * `start_time` - The event start time
+  /// * `end_time` - The event end time
   public(friend) fun create_event(
     e_id: String,
     name: String,
@@ -167,7 +177,7 @@ module ticketland::event {
     start_time: u64,
     end_time: u64,
     ctx: &mut TxContext
-  ) {
+  ): address {
     // the event id
     let id = object::new(ctx);
     let nft_event_id = object::new(ctx);
@@ -188,7 +198,7 @@ module ticketland::event {
     let event = Event {
       id,
       e_id,
-      event_nft_id: uid_to_inner(&nft_event.id),
+      event_nft_id: uid_to_address(&nft_event.id),
       creator, 
       n_tickets,
       start_time,
@@ -202,13 +212,14 @@ module ticketland::event {
       event_id: uid_to_address(&event.id),
     };
 
+    let event_id = uid_to_address(&event.id);
     emit(EventCreated {
-      id: uid_to_inner(&event.id),
+      id: event_id,
       creator,
     });
 
     emit(EventNftCreated {
-      id: uid_to_inner(&nft_event.id),
+      id: uid_to_address(&nft_event.id),
       creator,
     });
 
@@ -218,6 +229,8 @@ module ticketland::event {
     transfer(nft_event, creator);
     // Create and transfer the organizer cap as well so the event creator can manage events
     transfer(organizer_cap, creator);
+
+    event_id
   }
 
   /// Allows the bearer of the organizer cap to add the given ticket types to the event. It can only be called once per event
@@ -296,7 +309,7 @@ module ticketland::event {
     dfield::add<vector<u8>, ST>(&mut ticket_type.id, SALE_TYPE_KEY, sale_type);
   }
 
-  public(friend) fun event_organizer_cap_into_event_id(cap: &EventOrganizerCap): address {
+  public(friend) fun get_event_organizer_cap_event_id(cap: &EventOrganizerCap): address {
     cap.event_id
   }
 
