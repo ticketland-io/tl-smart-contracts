@@ -165,10 +165,21 @@ module ticketland::nft_ticket {
     }
   }
 
+  /// Similar in logic to `init_nfts_per_ticket_type`
+  fun init_nfts_per_event(
+    event_id: address,
+    nft_repository: &mut NftRepository,
+  ): &mut VecMap<String, NftTicketDetails> {
+    if(vec_map::contains(&nft_repository.nfts_per_event, &event_id)) {
+      vec_map::get_mut(&mut nft_repository.nfts_per_event, &event_id)
+    } else {
+      vec_map::insert(&mut nft_repository.nfts_per_event, event_id, vec_map::empty());
+      vec_map::get_mut(&mut nft_repository.nfts_per_event, &event_id)
+    }
+  }
+
   /// Internal function that will create a new NftTicketDetails
   entry fun create_nft_details(
-    event_id: address,
-    ticket_type_id: address,
     name: String,
     description: String,
     image_uri: String,
@@ -177,8 +188,7 @@ module ticketland::nft_ticket {
     nft_repository: &mut NftRepository,
     event: &Event,
     cap: &EventOrganizerCap,
-  ): NftTicketDetails {
-    assert!(is_event_ticket_type(event, ticket_type_id), E_WRONG_TICKET_TYPE);
+  ): (address, NftTicketDetails) {
     let len = vector::length(&property_keys);
     assert!(len == vector::length(&property_values), E_PROPERTY_VEC_MISMATCH);
 
@@ -194,12 +204,14 @@ module ticketland::nft_ticket {
       i = i + 1;
     };
 
-    NftTicketDetails {
+    let nft_detail = NftTicketDetails {
       name,
       description,
       image_uri,
       properties,
-    }
+    };
+
+    (event_id, nft_detail)
   }
 
   /// Mints the root Ticket Object
@@ -226,10 +238,10 @@ module ticketland::nft_ticket {
 
   /// Allows the event organizer to register new (or update existing) Ticket NFT descriptions. Any arbitraty number
   /// of such NFTS can be created. Once description added, Ticket object owners can claim a new NFT in a subsequent call.
+  /// It will fail if `nft_ref_name` has been already registered
   /// 
   /// # Arguments
   /// 
-  /// * `event_id` - The id of the Event object in address format
   /// * `ticket_type_id` - The id of the TicketType object in address format
   /// * `nft_ref_name` - The reference name of the NFT that is being registered. This is used as a key in VecMap for quick access
   /// * `name` - The NFT name
@@ -241,7 +253,6 @@ module ticketland::nft_ticket {
   /// * `event` - The Event object for which this NFT is being registered
   /// * `cap` - The capability that gives access to it's bearer to this function
   public entry fun register_nft_ticket_per_ticket_type(
-    event_id: address,
     ticket_type_id: address,
     nft_ref_name: String,
     name: String,
@@ -253,9 +264,7 @@ module ticketland::nft_ticket {
     event: &Event,
     cap: &EventOrganizerCap,
   ) {
-    let nft_details = create_nft_details(
-      event_id,
-      ticket_type_id,
+    let (event_id, nft_details) = create_nft_details(
       name,
       description,
       image_uri,
@@ -267,8 +276,34 @@ module ticketland::nft_ticket {
     );
 
     let ticket_type_nfts = init_nfts_per_ticket_type(event_id, ticket_type_id, nft_repository);
-    // fails if nft_ref_name already exists
     vec_map::insert(ticket_type_nfts, nft_ref_name, nft_details);
+  }
+
+  /// Similar to `register_nft_ticket_per_ticket_type` but registers claimable NFT for all ticket holder of an event
+  public entry fun register_nft_ticket_per_event(
+    nft_ref_name: String,
+    name: String,
+    description: String,
+    image_uri: String,
+    property_keys: vector<String>,
+    property_values: vector<String>,
+    nft_repository: &mut NftRepository,
+    event: &Event,
+    cap: &EventOrganizerCap,
+  ) {
+    let (event_id, nft_details) = create_nft_details(
+      name,
+      description,
+      image_uri,
+      property_keys,
+      property_values,
+      nft_repository,
+      event,
+      cap,
+    );
+
+    let event_nfts = init_nfts_per_event(event_id, nft_repository);
+    vec_map::insert(event_nfts, nft_ref_name, nft_details);
   }
 
   /// Allows the owner of the given Ticket to mint a new NftTicket from the NftRepository.
