@@ -2,6 +2,7 @@
 module ticketland::basic_sale {
   use sui::tx_context::{TxContext};
   use std::string::{String};
+  use sui::coin::{Coin, CoinMetadata};
   use ticketland::nft_ticket::{Self};
   use ticketland::num_utils::{u64_to_str};
   use ticketland::sale_type::{FixedPrice, get_fixed_price_amount};
@@ -34,8 +35,10 @@ module ticketland::basic_sale {
     )
   }
 
-  public(friend) entry fun fixed_price(
+  public(friend) entry fun fixed_price<C>(
     event: &Event,
+    coins: &mut Coin<C>,
+    coin_meta: &CoinMetadata<T>,
     ticket_type_index: u64,
     ticket_name: String,
     seat_index: u64,
@@ -43,9 +46,13 @@ module ticketland::basic_sale {
     ctx: &mut TxContext
   ): (address, u256) {
     let ticket_type = get_ticket_type(event, ticket_type_index);
+    let coin_type = 
     let amount = get_fixed_price_amount(
       get_sale_type<FixedPrice>(event, ticket_type_index)
     );
+
+    // TODO: calc fees and transfer funds from buyer to sellet and protocol recipient
+    let fees = 0;
 
     let ticket_id = nft_ticket::mint_ticket(
       get_event_id(event),
@@ -58,6 +65,6 @@ module ticketland::basic_sale {
       ctx,
     );
 
-    (ticket_id, amount)
+    (ticket_id, amount, fees)
   }
 }

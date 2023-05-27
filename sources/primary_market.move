@@ -1,6 +1,7 @@
 module ticketland::primary_market {
   use std::vector;
   use sui::clock::{Self, Clock};
+  use sui::coin::{Coin, CoinMetadata};
   use sui::tx_context::{TxContext, sender};
   use std::string::{Self, String, utf8};
   use sui::event::{emit};
@@ -23,6 +24,7 @@ module ticketland::primary_market {
   struct TicketPurchased has copy, drop {
     ticket_id: address,
     price: u256,
+    fees: u256,
     buyer: address,
     sale_type: String,
   }
@@ -92,13 +94,16 @@ module ticketland::primary_market {
     emit(TicketPurchased {
       ticket_id,
       price: 0,
+      fees: 0,
       buyer,
       sale_type: utf8(b"free"),
     });
   }
 
-  public entry fun fixed_price(
+  public entry fun fixed_price<T>(
     event: &mut Event,
+    coins: &mut Coin<T>,
+    coin_meta: &CoinMetadata<T>,
     ticket_type_index: u64,
     ticket_name: String,
     seat_index: u64,
@@ -110,12 +115,20 @@ module ticketland::primary_market {
     let buyer = sender(ctx);
 
     pre_purchase(event, ticket_type_index, seat_index, seat_name, proof, clock);
-    let (ticket_id, price) = basic_sale::fixed_price(event, ticket_type_index, ticket_name, seat_index, seat_name, ctx);
+    let (ticket_id, price, fees) = basic_sale::fixed_price(
+      event,
+      ticket_type_index,
+      ticket_name,
+      seat_index,
+      seat_name,
+      ctx,
+    );
     post_purchase(event, seat_index);
 
     emit(TicketPurchased {
       ticket_id,
       price,
+      fees,
       buyer,
       sale_type: utf8(b"free"),
     });
