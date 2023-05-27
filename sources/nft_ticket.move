@@ -15,14 +15,29 @@ module ticketland::nft_ticket {
 
   friend ticketland::primary_market;
 
+  /// constants
+  const MAX_NFT_PER_TICKET_TYPE: u64 = 10;
+
+  /// Errros
+  const E_PROPERTY_VEC_MISMATCH: u64 = 0;
+  const E_WRONG_TICKET_TYPE: u64 = 1;
+  const E_WRONG_EVENT: u64 = 2;
+
   /// One-Time-Witness for the module.
   struct NFT_TICKET has drop {}
 
   /// A registrys NftTicketDetails that are used to utlimately mint new NftTickets
   struct NftRepository has key {
     id: UID,
-    // event id (as address) => ticket_type_id => NftTicketDetails
-    ticket_nfts: VecMap<address, VecMap<address, NftTicketDetails>>,
+    // event id (as address) => ticket_type_id => nft_ref_name => NftTicketDetails
+    // Each ticket type in an event can have multiple claimable NFTs. For example, a VIP ticket
+    // type might have a pre-event NFT which Ticket holders can claim, but a rgular ticket might not.
+    nfts_per_ticket_type: VecMap<address, VecMap<address, VecMap<String, NftTicketDetails>>>,
+
+    // A list of airdrops claimable by any event ticket holder regardless of ticket type.
+    // We could, in theory, use `nfts_per_ticket_type` collection but it would require duplications; so for
+    // performance reasons we better maintain a separate collection.
+    nfts_per_event: VecMap<address, VecMap<String, NftTicketDetails>>,
   }
 
   // A struct that contains the details of each NFT an event organizer issues and which can later be 
@@ -65,11 +80,6 @@ module ticketland::nft_ticket {
     attached_nfts: ObjectBag,
   }
 
-  /// Errros
-  const E_PROPERTY_VEC_MISMATCH: u64 = 0;
-  const E_WRONG_TICKET_TYPE: u64 = 1;
-  const E_WRONG_EVENT: u64 = 2;
-
   fun init(otw: NFT_TICKET, ctx: &mut TxContext) {
     let ticket_keys = vector[
       utf8(b"Event id"),
@@ -82,8 +92,8 @@ module ticketland::nft_ticket {
 
     let ticket_values = vector[
       utf8(b"{name}"),
-      utf8(b"{event_id}"),
-      utf8(b"https://app.ticketland/events/{event_id}"),
+      utf8(b"{e_id}"),
+      utf8(b"https://app.ticketland/events/{e_id}"),
       utf8(b"{price_sold}"),
       utf8(b"{seat_index}"),
       utf8(b"{seat_name}"),
@@ -111,13 +121,48 @@ module ticketland::nft_ticket {
 
     let nft_repository = NftRepository {
       id: object::new(ctx),
-      ticket_nfts: vec_map::empty(),
+      nfts_per_ticket_type: vec_map::empty(),
+      nfts_per_event: vec_map::empty(),
     };
 
     public_transfer(publisher, sender(ctx));
     public_transfer(d1, sender(ctx));
     public_transfer(d2, sender(ctx));
     share_object(nft_repository);
+  }
+
+  /// It will make sure that all VecMaps until the most inner one have been initialized.
+  /// Once this function is called, all the caller has to check is that the `nft_ref_name => NftTicketDetails`
+  /// part exist and if not insert a value. This function makes sure that the `event id (as address) => ticket_type_id =>`
+  /// will be setup so it is safe to safely use the VecMap's get and get_mut API.
+  /// Finally, the function will return the inner most part `nft_ref_name => NftTicketDetails` so it can be consumed.
+  fun init_nfts_per_ticket_type(
+    event_id: address,
+    ticket_type_id: address,
+    nft_repository: &mut NftRepository,
+  ): &mut VecMap<String, NftTicketDetails> {
+    /// Init all nested VecMaps where needed
+    if(vec_map::contains(&nft_repository.nfts_per_ticket_type, &event_id)) {
+      let l2_map = vec_map::get_mut(&mut nft_repository.nfts_per_ticket_type, &event_id);
+
+      if(!vec_map::contains(l2_map, &ticket_type_id)) {
+        vec_map::insert(l2_map, ticket_type_id, vec_map::empty());
+      };
+
+      vec_map::get_mut(
+        vec_map::get_mut(&mut nft_repository.nfts_per_ticket_type, &event_id),
+        &ticket_type_id,
+      )
+    } else {
+      let l2_map = vec_map::empty();
+      vec_map::insert(&mut l2_map, ticket_type_id, vec_map::empty());
+      vec_map::insert(&mut nft_repository.nfts_per_ticket_type, event_id, l2_map);
+
+      vec_map::get_mut(
+        vec_map::get_mut(&mut nft_repository.nfts_per_ticket_type, &event_id),
+        &ticket_type_id,
+      )
+    }
   }
 
   /// Mints the root Ticket Object
@@ -144,17 +189,32 @@ module ticketland::nft_ticket {
 
   /// Allows the event organizer to register new (or update existing) Ticket NFT descriptions. Any arbitraty number
   /// of such NFTS can be created. Once description added, Ticket object owners can claim a new NFT in a subsequent call.
+  /// 
+  /// # Arguments
+  /// 
+  /// * `event_id` -  The id of the Event object in address format
+  /// * `ticket_type_id` -  The id of the TicketType object in address format
+  /// * `nft_ref_name` -  The reference name of the NFT that is being registered. This is used as a key in VecMap for quick access
+  /// * `name` -  The NFT name
+  /// * `description` -  The NFT description
+  /// * `image_uri` -  The NFT image_uri
+  /// * `property_keys` -  The NFT property keys
+  /// * `property_values` -  The NFT property values
+  /// * `nft_repository` -  The nft repository where the NFT details are stored
+  /// * `event` -  The Event object for which this NFT is being registered
+  /// * `cap` -  The capability that gives access to it's bearer to this function
   public entry fun register_nft_ticket(
     event_id: address,
     ticket_type_id: address,
+    nft_ref_name: String,
     name: String,
     description: String,
     image_uri: String,
     property_keys: vector<String>,
     property_values: vector<String>,
+    nft_repository: &mut NftRepository,
     event: &Event,
     cap: &EventOrganizerCap,
-    nft_repository: &mut NftRepository,
   ) {
     assert!(is_event_ticket_type(event, ticket_type_id), E_WRONG_TICKET_TYPE);
     let len = vector::length(&property_keys);
@@ -178,23 +238,9 @@ module ticketland::nft_ticket {
       properties,
     };
 
-    // store the nft details. Initialize the nested vec maps if needed
-    if(vec_map::contains(&nft_repository.ticket_nfts, &event_id)) {
-      let nested_map = vec_map::get_mut(&mut nft_repository.ticket_nfts, &event_id);
-
-      // create nested vec_map if needed
-      if(vec_map::contains(nested_map, &ticket_type_id)) {
-        // remove the old one and replace with the new
-        vec_map::remove(nested_map, &ticket_type_id);
-        vec_map::insert(nested_map, ticket_type_id, nft_details);
-      } else {
-        vec_map::insert(nested_map, ticket_type_id, nft_details);
-      }
-    } else {
-      vec_map::insert(&mut nft_repository.ticket_nfts, event_id, vec_map::empty());
-      let nested_map = vec_map::get_mut(&mut nft_repository.ticket_nfts, &event_id);
-      vec_map::insert(nested_map, ticket_type_id, nft_details);
-    }
+    let ticket_type_nfts = init_nfts_per_ticket_type(event_id, ticket_type_id, nft_repository);
+    // fails if nft_ref_name already exists
+    vec_map::insert(ticket_type_nfts, nft_ref_name, nft_details);
   }
 
   /// Allows the owner of the given Ticket to mint a new NftTicket from the NftRepository. Each Ticket can claim one
@@ -202,14 +248,18 @@ module ticketland::nft_ticket {
   public entry fun mint_nft_ticket(
     event_id: address,
     ticket_type_id: address,
+    nft_ref_name: String,
     nft_repository: &mut NftRepository,
     ticket: &mut Ticket,
     ctx: &mut TxContext,
   ) {
     assert!(ticket.event_id == event_id, E_WRONG_EVENT);
-    let ticket_nfts = vec_map::get(&nft_repository.ticket_nfts, &event_id);
-    let nft_details = vec_map::get(ticket_nfts, &ticket_type_id);
 
+    let nfts_per_ticket_type = vec_map::get(&nft_repository.nfts_per_ticket_type, &event_id);
+    let nft_details = vec_map::get(
+      vec_map::get(nfts_per_ticket_type, &ticket_type_id),
+      &nft_ref_name,
+    );
     // Copy the properties vec map
     let properties = vec_map::empty<String, String>();
     let keys = vec_map::keys(&nft_details.properties);
