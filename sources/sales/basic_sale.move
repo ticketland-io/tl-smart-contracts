@@ -2,12 +2,16 @@
 module ticketland::basic_sale {
   use sui::tx_context::{TxContext};
   use std::string::{String};
-  use sui::transfer::{public_transfer};
+  use sui::transfer::{share_object, public_transfer, sender};
   use std::type_name;
+  use sui::object::{Seld, UID};
   use sui::coin::{Coin, value, split};
-  use ticketland::ticket::{Self};
+  use sui::vec_map::{Self, VecMap};
+  use sui::object_bag::{Self, ObjectBag};
+  use ticketland::ticket::{Self, CNT, get_cnt_id};
   use ticketland::num_utils::{u64_to_str};
   use ticketland::event::{get_event_creator};
+  use ticketland::attendance::{has_attended};
   use ticketland::event_registry::{Config, get_protocol_info};
   use ticketland::sale_type::{
     FixedPrice, Refundable, get_fixed_price_amount, get_refundable_price_amount
@@ -23,6 +27,20 @@ module ticketland::basic_sale {
 
   /// Errors
   const E_INSUFFICIENT_BALANCE: u64 = 0;
+
+  // Holds the coins paid for refundable tickets
+  struct RefundEscrow has key {
+    id: UID,
+    /// Allows to store escrowed coins for all the supported coin types
+    coins: ObjectBag,
+  }
+
+  fun init(ctx: &mut TxContext) {
+    share_object(RefundEscrow {
+      id: object::new(ctx),
+      coins: object_bag::new(ctx),
+    })
+  }
 
   public(friend) entry fun free_sale(
     event: &Event,
@@ -94,7 +112,8 @@ module ticketland::basic_sale {
     ticket_name: String,
     seat_index: u64,
     seat_name: String,
-    ctx: &mut TxContext
+    escrow: RefundEscrow,
+    ctx: &mut TxContext,
   ): (address, u64) {
     let ticket_type = get_ticket_type(event, ticket_type_index);
     let coin_type = type_name::into_string(type_name::get<Coin<T>>());
@@ -116,8 +135,25 @@ module ticketland::basic_sale {
       ctx,
     );
 
+    // Store the ticket cost in a dynamic bag so it can later be claimed by the CNT owner
+    object_bag::add(&mut escrow.coins, cnt_id, split(coins, price, ctx));
+
     (cnt_id, price)
   }
 
-  // public entry fun
+  /// Refundable tickets allow the owners who attended the event to get a refund for the money paid to buy the ticket.
+  /// cnt is passed as a owned value for access control reasons i.e. only owner of CNT can call this function.
+  public entry fun get_refund<T>(
+    cnt: CNT,
+    config: &attendance::Config,
+    escrow: &mut RefundEscrow,
+    ctx: &mut TxContext,
+  ) {
+    let cnt_id = get_cnt_id(&cnt);
+    let coins = object_bag::remove(&mut escrow.coins, &cnt_id);
+    // TODO: Not Implemented
+
+    // return the cnt back to owner
+    transfer(cnt, sender(ctx))
+  }
 }

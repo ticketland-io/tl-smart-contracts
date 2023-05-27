@@ -9,7 +9,7 @@ module ticketland::primary_market {
   use ticketland::merkle_tree;
   use ticketland::num_utils::{u64_to_str};
   use ticketland::event_registry::Config;
-  use ticketland::basic_sale;
+  use ticketland::basic_sale::{RefundEscrow};
   use ticketland::event::{
     Event, get_ticket_type, get_ticket_type_sale_time, get_available_seats, get_seat_range, get_seats,
     get_ticket_type_mt_root, update_seats, increment_tickets_sold,
@@ -146,6 +146,7 @@ module ticketland::primary_market {
     seat_name: String,
     proof: vector<vector<u8>>,
     clock: &Clock,
+    escrow: RefundEscrow,
     ctx: &mut TxContext
   ) {
     let buyer = sender(ctx);
@@ -158,6 +159,7 @@ module ticketland::primary_market {
       ticket_name,
       seat_index,
       seat_name,
+      escrow,
       ctx,
     );
     post_purchase(event, seat_index);

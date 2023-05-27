@@ -137,6 +137,14 @@ module ticketland::ticket {
     share_object(nft_repository);
   }
 
+  public fun get_cnt_id(cnt: &CNT): address {
+    uid_to_address(&cnt.id)
+  }
+
+  public fun get_cnt_event_id(cnt: &CNT): address {
+    cnt.event_id
+  }
+
   /// It will make sure that all VecMaps until the most inner one have been initialized.
   /// Once this function is called, all the caller has to check is that the `nft_ref_name => NftTicketDetails`
   /// part exist and if not insert a value. This function makes sure that the `event id (as address) => ticket_type_id =>`
@@ -396,13 +404,5 @@ module ticketland::ticket {
 
   public(friend) fun set_attended(cnt: &mut CNT) {
     cnt.attended = true;
-  }
-
-  public fun get_cnt_id(cnt: &CNT): address {
-    uid_to_address(&cnt.id)
-  }
-
-  public fun get_cnt_event_id(cnt: &CNT): address {
-    cnt.event_id
   }
 }
