@@ -13,6 +13,7 @@ module ticketland::ticket {
   };
 
   friend ticketland::basic_sale;
+  friend ticketland::attendance;
 
   /// constants
   const MAX_NFT_PER_TICKET_TYPE: u64 = 10;
@@ -391,6 +392,10 @@ module ticketland::ticket {
     let nft_details = vec_map::get(nfts_per_event, &nft_ref_name,);
 
     create_and_attach_ticket(nft_details, cnt, ctx);
+  }
+
+  public(friend) fun set_attended(cnt: &mut CNT) {
+    cnt.attended = true;
   }
 
   public fun get_cnt_id(cnt: &CNT): address {

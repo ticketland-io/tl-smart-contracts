@@ -3,12 +3,13 @@ module ticketland::attendance {
   use sui::object::{Self, UID};
   use sui::transfer::{share_object};
   use sui::vec_map::{Self, VecMap};
-  use ticketland::ticket::{CNT, get_cnt_id, get_cnt_event_id};
+  use ticketland::ticket::{Self, CNT, get_cnt_id, get_cnt_event_id};
 
   friend ticketland::event_registry;
 
   /// Error
   const E_UNAUTHORIZED: u64 = 0;
+  const E_DID_NOT_ATTEND: u64 = 1;
 
   struct OperatorCap has key, store {
     id: UID,
@@ -52,5 +53,17 @@ module ticketland::attendance {
   ) {
     assert!(get_cnt_event_id(cnt) == cap.event_id, E_UNAUTHORIZED);
     vec_map::insert(&mut config.attendace, get_cnt_id(cnt), true);
+  }
+
+  /// Called by the onwer of CNT to update the `attended` field of the CNT object.
+  /// One of the operators must have called `set_attended` before for this function to succeed.
+  public fun confirm_attended(
+    cnt: &mut CNT,
+    config: &mut Config,
+  ) {
+    let has_attended = *vec_map::get(&config.attendace, &get_cnt_id(cnt));
+    assert!(has_attended, E_DID_NOT_ATTEND);
+
+    ticket::set_attended(cnt);
   }
 }
