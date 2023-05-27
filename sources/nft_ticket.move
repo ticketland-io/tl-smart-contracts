@@ -370,4 +370,20 @@ module ticketland::nft_ticket {
 
     create_and_attach_ticket(nft_details, ticket, ctx);
   }
+
+  /// Same as mint_nft_ticket_for_ticket_type but for NFTs claimable on the event level
+  public entry fun mint_nft_for_event(
+    event_id: address,
+    nft_ref_name: String,
+    nft_repository: &mut NftRepository,
+    ticket: &mut Ticket,
+    ctx: &mut TxContext,
+  ) {
+    assert!(ticket.event_id == event_id, E_WRONG_EVENT);
+
+    let nfts_per_event = vec_map::get(&nft_repository.nfts_per_event, &event_id);
+    let nft_details = vec_map::get(nfts_per_event, &nft_ref_name,);
+
+    create_and_attach_ticket(nft_details, ticket, ctx);
+  }
 }
