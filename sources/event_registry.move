@@ -98,6 +98,10 @@ module ticketland::event_registry {
     );
   }
 
+  public fun is_coin_supported(config: &Config, coin_type: &ascii::String): bool {
+    vec_map::contains(&config.supported_coins, coin_type)
+  }
+
   #[test_only]
   /// Wrapper of module initializer for testing. Test modules cannot directly call init() so we have to go though this
   /// public function instead
