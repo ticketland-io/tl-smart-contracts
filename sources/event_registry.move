@@ -1,6 +1,8 @@
 module ticketland::event_registry {
   use sui::tx_context::{TxContext, sender};
   use std::string::{String};
+  use sui::vec_map::{Self, VecMap};
+  use std::vector;
   use sui::object::{Self, UID};
   use std::ascii;
   use sui::event;
@@ -13,7 +15,7 @@ module ticketland::event_registry {
   struct Config has key {
     id: UID,
     /// The list of supported coins that can be used in purchases. The string value is a sui::type_name::TypeName
-    supported_coins: vector<ascii::String>,
+    supported_coins: VecMap<ascii::String, bool>,
     /// The fees collected by the protocol during various interaction i.e. primary sale, secondary etc.
     protocol_fee: u64,
     /// The address that will be receiving those fees
@@ -31,7 +33,7 @@ module ticketland::event_registry {
 
     let config = Config {
       id: object::new(ctx), 
-      supported_coins: vector[],
+      supported_coins: vec_map::empty(),
       protocol_fee: 0,
       protocol_fee_address: sender(ctx),
     };
@@ -47,11 +49,22 @@ module ticketland::event_registry {
     supported_coins: vector<ascii::String>,
     protocol_fee: u64,
     protocol_fee_address: address,
-    _ctx: &mut TxContext
+    _ctx: &mut TxContext,
   ) {
-    config.supported_coins = supported_coins;
+    // reset old vec_map
+    config.supported_coins = vec_map::empty();
     config.protocol_fee = protocol_fee;
     config.protocol_fee_address = protocol_fee_address;
+
+    let len = vector::length(&supported_coins);
+    let i = 0;
+
+    while (i < len) {
+      let coin_type = *vector::borrow(&supported_coins, i);
+      vec_map::insert(&mut config.supported_coins, coin_type, true);
+
+      i = i + 1;
+    };
 
     event::emit(ConfigUpdated {});
   }
