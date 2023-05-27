@@ -32,8 +32,8 @@ module ticketland::event {
 
   struct NftEvent has key {
     id: UID,
-    /// Internal off-chain event id
-    event_id: String,
+    /// The off-chain event id
+    e_id: String,
     /// The name of the NFT
     name: String,
     /// The description
@@ -53,8 +53,8 @@ module ticketland::event {
   // THe shared event object
   struct Event has key {
     id: UID,
-    /// Internal off-chain event id
-    event_id: String, 
+    /// The off-chain event id
+    e_id: String, 
     /// The id of the NftEvent associated with this event
     event_nft_id: ID,
     /// The event creator
@@ -133,11 +133,11 @@ module ticketland::event {
     ];
 
     let event_nft_values = vector[
-      utf8(b"{event_id}"),
+      utf8(b"{e_id}"),
       utf8(b"{name}"),
       utf8(b"{description}"),
       utf8(b"{image_uri}"),
-      utf8(b"https://app.ticketland/events/{event_id}"),
+      utf8(b"https://app.ticketland/events/{e_id}"),
       address::to_string(creator),
     ];
 
@@ -159,7 +159,7 @@ module ticketland::event {
 
   /// Create a new shared Event object and the onwed by the event creator NftEvent object
   public(friend) fun create_event(
-    event_id: String,
+    e_id: String,
     name: String,
     description: String,
     image_uri: String,
@@ -174,7 +174,7 @@ module ticketland::event {
 
     let nft_event = NftEvent {
       id: nft_event_id,
-      event_id,
+      e_id,
       name,
       description,
       image_uri,
@@ -187,7 +187,7 @@ module ticketland::event {
     let creator = sender(ctx);
     let event = Event {
       id,
-      event_id,
+      e_id,
       event_nft_id: uid_to_inner(&nft_event.id),
       creator, 
       n_tickets,
@@ -309,8 +309,8 @@ module ticketland::event {
     false
   }
 
-  public fun get_event_id(event: &Event): String {
-    event.event_id
+  public fun get_offchain_event_id(event: &Event): String {
+    event.e_id
   }
 
   public fun get_available_seats(event: &Event): u32 {

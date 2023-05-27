@@ -49,8 +49,10 @@ module ticketland::nft_ticket {
   // This is the core Ticket. It's a compound NFT meaming that it consists of everal other NftTicket attached to it.
   struct Ticket has key {
     id: UID,
-    /// Internal off-chain event id
-    event_id: String,
+    /// The on-chain id of the event (as address)
+    event_id: address,
+    /// The off-chain event id
+    e_id: String,
     /// The name of the ticket
     name: String,
     /// The price this ticket was sold for
@@ -66,6 +68,7 @@ module ticketland::nft_ticket {
   /// Errros
   const E_PROPERTY_VEC_MISMATCH: u64 = 0;
   const E_WRONG_TICKET_TYPE: u64 = 1;
+  const E_WRONG_EVENT: u64 = 2;
 
   fun init(otw: NFT_TICKET, ctx: &mut TxContext) {
     let ticket_keys = vector[
@@ -119,7 +122,8 @@ module ticketland::nft_ticket {
 
   /// Mints the root Ticket Object
   public(friend) fun mint_ticket(
-    event_id: String,
+    event_id: address,
+    e_id: String,
     name: String,
     seat_index: String,
     seat_name: String,
@@ -129,6 +133,7 @@ module ticketland::nft_ticket {
     Ticket {
       id: object::new(ctx),
       event_id,
+      e_id,
       name,
       seat_index,
       seat_name,
@@ -201,6 +206,7 @@ module ticketland::nft_ticket {
     ticket: &mut Ticket,
     ctx: &mut TxContext,
   ) {
+    assert!(ticket.event_id == event_id, E_WRONG_EVENT);
     let ticket_nfts = vec_map::get(&nft_repository.ticket_nfts, &event_id);
     let nft_details = vec_map::get(ticket_nfts, &ticket_type_id);
 
@@ -225,7 +231,8 @@ module ticketland::nft_ticket {
       properties,
     };
 
-    // attach to the Ticket
+    // attach to the Ticket. Will fail if there's already a ticket with such nft_details attached. This guarantees
+    // on ticket claim (for a given ticket type) per each Ticket
     object_bag::add(&mut ticket.attached_nfts, *nft_details, nft_ticket);
   }
 }
