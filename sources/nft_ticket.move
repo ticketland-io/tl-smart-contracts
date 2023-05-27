@@ -226,8 +226,8 @@ module ticketland::nft_ticket {
     seat_name: String,
     price_sold: u256,
     ctx: &mut TxContext,
-  ): Ticket {
-    Ticket {
+  ) {
+    let ticket = Ticket {
       id: object::new(ctx),
       event_id,
       ticket_type_id,
@@ -237,7 +237,9 @@ module ticketland::nft_ticket {
       seat_name,
       price_sold,
       attached_nfts: object_bag::new(ctx),
-    }
+    };
+
+    transfer(ticket, sender(ctx));
   }
 
   /// Allows the event organizer to register new (or update existing) Ticket NFT descriptions. Any arbitraty number

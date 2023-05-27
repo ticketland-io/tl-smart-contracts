@@ -8,10 +8,12 @@ module ticketland::primary_market {
   use ticketland::bitmap;
   use ticketland::merkle_tree;
   use ticketland::num_utils::{u64_to_str};
-  use ticketland::nft_ticket::{Self};
+  use ticketland::nft_ticket::{Self, Ticket};
+  use ticketland::sale_type::Free;
   use ticketland::event::{
     Event, get_ticket_type, get_ticket_type_sale_time, get_available_seats, get_seat_range, get_seats,
-    get_ticket_type_mt_root, update_seats, increment_tickets_sold,
+    get_ticket_type_mt_root, update_seats, increment_tickets_sold, get_event_id, get_offchain_event_id,
+    get_sale_type, get_ticket_type_id,
   };
 
   /// Erros
@@ -81,14 +83,20 @@ module ticketland::primary_market {
     seat_name: String,
     ctx: &mut TxContext
   ) {
-    // let pri
-    // let nft_ticket = nft_ticket::mint_ticket(
-    //   get_event_id(event),
-    //   ticket_name,
-    //   u64_to_str(seat_index),
-    //   seat_name,
-    //   price_sold,
-    // );
+    let ticket_type = get_ticket_type(event, ticket_type_index);
+    let free_sale_type = get_sale_type<Free>(event, ticket_type_index);
+    let price_sold = 0;
+
+    nft_ticket::mint_ticket(
+      get_event_id(event),
+      get_ticket_type_id(ticket_type),
+      get_offchain_event_id(event),
+      ticket_name,
+      u64_to_str(seat_index),
+      seat_name,
+      price_sold,
+      ctx,
+    );
   }
 
   public entry fun free_sale(

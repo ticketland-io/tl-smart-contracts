@@ -89,7 +89,7 @@ module ticketland::event {
     to: u64
   }
 
-  /// Thhe ticket type. Note this struct will have SaleType attached as a dynamic field. This is so we can support
+  /// The ticket type. Note this struct will have SaleType attached as a dynamic field. This is so we can support
   /// hetergenous sale type values. We could also use Bag (which uses dynamic fields under the hood as well)
   struct TicketType has store {
     id: UID,
@@ -273,10 +273,19 @@ module ticketland::event {
     assert!(!dfield::exists_(&ticket_type.id, SALE_TYPE_KEY), E_SALE_TYPE_SET);
   }
 
+  /// Return an immutable reference to the SaleType (ST) stored as a dynamic field on the TicketType object
+  public fun get_sale_type<ST: store>(
+    event: &Event,
+    ticket_type_index: u64,
+  ): &ST {
+    let ticket_type = vector::borrow(&event.ticket_types, ticket_type_index);
+    dfield::borrow<vector<u8>, ST>(&ticket_type.id, SALE_TYPE_KEY)
+  }
+
   /// Called by the sale type module to add the given generic sale type as a dynamic field of TicketType
   /// object. We use dynamic fields to support heterogeneous struct type which is not possible with a VecMap.
   /// Note we could also use Bag which uses dynamic fields under the hood anyways.
-  public(friend) fun add_sale_type<ST: store>(
+  public fun add_sale_type<ST: store>(
     sale_type: ST,
     event: &mut Event,
     ticket_type_index: u64,
@@ -309,6 +318,10 @@ module ticketland::event {
     false
   }
 
+  public fun get_event_id(event: &Event): address {
+    uid_to_address(&event.id)
+  }
+
   public fun get_offchain_event_id(event: &Event): String {
     event.e_id
   }
@@ -319,6 +332,10 @@ module ticketland::event {
 
   public fun get_ticket_type(event: &Event, index: u64): &TicketType {
     vector::borrow(&event.ticket_types, index)
+  }
+
+  public fun get_ticket_type_id(ticket_type: &TicketType): address {
+    uid_to_address(&ticket_type.id)
   }
   
   public fun get_ticket_type_sale_time(ticket_type: &TicketType): (u64, u64) {
