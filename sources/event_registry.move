@@ -1,7 +1,8 @@
 module ticketland::event_registry {
   use sui::tx_context::{TxContext, sender};
+  use std::string::{String};
   use sui::object::{Self, UID};
-  use std::string::String;
+  use std::ascii;
   use sui::event;
   use sui::transfer::{transfer, share_object};
   use ticketland::event as tl_event;
@@ -11,9 +12,8 @@ module ticketland::event_registry {
 
   struct Config has key {
     id: UID,
-    /// The list of supported coins that can be used in purchases. These are the addresses (taken from UID::ID::address)
-    /// of th CoinMetadata objects related with each currency. CoinMetadata is unique for each Coin
-    supported_coins: vector<address>,
+    /// The list of supported coins that can be used in purchases. The string value is a sui::type_name::TypeName
+    supported_coins: vector<ascii::String>,
     /// The fees collected by the protocol during various interaction i.e. primary sale, secondary etc.
     protocol_fee: u64,
     /// The address that will be receiving those fees
@@ -44,7 +44,7 @@ module ticketland::event_registry {
   public entry fun update_config(
     _cap: &AdminCap,
     config: &mut Config,
-    supported_coins: vector<address>,
+    supported_coins: vector<ascii::String>,
     protocol_fee: u64,
     protocol_fee_address: address,
     _ctx: &mut TxContext
