@@ -2,7 +2,10 @@ module ticketland::secondary_market {
   use sui::object::{Self, UID};
   use sui::tx_context::{TxContext, sender};
   use sui::transfer::{share_object};
+  use std::type_name;
+  use std::option::{Self, is_some};
   use sui::coin::{Coin};
+  use ticketland::price_oracle::{ExchangeRate, exchange_value};
   use ticketland::event::{Event, get_resale_cap_bps, get_event_id};
   use ticketland::ticket::{Self, CNT, get_cnt_event_id, get_cnt_id, get_paid_amount, share_cnt};
 
@@ -14,6 +17,7 @@ module ticketland::secondary_market {
   const E_MAX_PRICE_VIOLATION: u64 = 1;
   const E_CNT_LISTING_MISMATCH: u64 = 2;
   const E_ONLY_LISTING_OWNER: u64 = 3;
+  const E_ONLY_PURCHASED_TICKETS: u64 = 4;
   
   /// A shared object describing a listing
   /// The phantom COIN generic type indicates the coin this listing is being sold for. Note
@@ -48,10 +52,22 @@ module ticketland::secondary_market {
     event: &Event,
     cnt: CNT,
     price: u64,
+    exhange_rate: &ExchangeRate,
     ctx: &mut TxContext
   ) {
     assert!(get_event_id(event) == get_cnt_event_id(&cnt), E_CNT_EVENT_MISMATCH);
-    let (_, paid) = get_paid_amount<COIN>(&cnt);
+    let (coin_type, paid) = get_paid_amount(&cnt);
+    assert!(is_some(&coin_type), E_ONLY_PURCHASED_TICKETS);
+
+    let listing_coin_type = type_name::into_string(type_name::get<COIN>());
+    // get the correct exchange rate
+    let price = exchange_value(
+      *option::borrow(&coin_type),
+      listing_coin_type,
+      price,
+      exhange_rate
+    );
+
     let max_allowed_price = (paid * (get_resale_cap_bps(event) as u64)) / BASIS_POINTS;
     assert!(price <= max_allowed_price, E_MAX_PRICE_VIOLATION);
 

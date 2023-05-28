@@ -157,7 +157,7 @@ module ticketland::ticket {
   }
 
   /// Returns the payment information of the given CNT
-  public fun get_paid_amount<COIN>(cnt: &CNT): (Option<ascii::String>, u64) {
+  public fun get_paid_amount(cnt: &CNT): (Option<ascii::String>, u64) {
     (cnt.payment_info.coin_type, cnt.payment_info.paid)
   }
 

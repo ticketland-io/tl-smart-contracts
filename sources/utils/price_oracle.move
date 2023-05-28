@@ -69,8 +69,12 @@ module ticketland::price_oracle {
   public fun get_exchange_rate(
     from: ascii::String,
     to: ascii::String,
-    exhange_rate: &mut ExchangeRate,
+    exhange_rate: &ExchangeRate,
   ): u64 {
+    if(from == to) {
+      return 1
+    };
+
     let rate = *vec_map::get(&exhange_rate.inner, &concat_ascii_strings(from, to));
 
     // if from is smallet then we just return the rate because that's how it's stored.
@@ -87,7 +91,7 @@ module ticketland::price_oracle {
     from: ascii::String,
     to: ascii::String,
     value: u64,
-    exhange_rate: &mut ExchangeRate,
+    exhange_rate: &ExchangeRate,
   ): u64 {
     value * get_exchange_rate(from, to, exhange_rate)
   }
