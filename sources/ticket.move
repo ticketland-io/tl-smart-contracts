@@ -72,7 +72,7 @@ module ticketland::ticket {
     id: UID,
     /// The on-chain id of the event (as address)
     event_id: address,
-    /// The CNT type id (as address)
+    /// The CNT ticket type id (as address)
     ticket_type_id: address,
     /// The off-chain event id
     e_id: String,

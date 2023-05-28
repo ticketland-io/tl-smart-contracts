@@ -208,6 +208,24 @@ module ticketland::event {
     (ticket_type.sale_start_time, ticket_type.sale_end_time)
   }
 
+  /// Checks if the tiven ticket type is indeed part of the given event
+  public fun has_ticket_type(event: &Event, ticket_type_id: address): bool {
+    let len = vector::length(&event.ticket_types);
+    let i = 0;
+
+    while(i < len) {
+      let ticket_type = vector::borrow(&event.ticket_types, i);
+
+      if(uid_to_address(&ticket_type.id) == ticket_type_id) {
+        return true
+      };
+
+      i = i + 1;
+    };
+
+    false
+  }
+
   /// Checks if the given seat index belongs to the seats assigned for the given ticket type
   public fun get_seat_range(ticket_type: &TicketType): (u64, u64) {
     (ticket_type.seat_range.from, ticket_type.seat_range.to)
