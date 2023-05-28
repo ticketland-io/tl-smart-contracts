@@ -6,7 +6,7 @@ module ticketland::secondary_market {
   use std::option::{Self, is_some};
   use sui::coin::{Coin};
   use ticketland::price_oracle::{ExchangeRate, exchange_value};
-  use ticketland::event::{Event, get_resale_cap_bps, get_event_id};
+  use ticketland::event::{Event, get_resale_cap_bps, get_event_id, is_ticket_type_of_event};
   use ticketland::ticket::{Self, CNT, get_cnt_event_id, get_cnt_id, get_paid_amount, share_cnt};
 
   /// Constants
@@ -18,6 +18,7 @@ module ticketland::secondary_market {
   const E_CNT_LISTING_MISMATCH: u64 = 2;
   const E_ONLY_LISTING_OWNER: u64 = 3;
   const E_ONLY_PURCHASED_TICKETS: u64 = 4;
+  const E_WRONG_TICKET_TYPE: u64 = 5;
   
   /// A shared object describing a listing
   /// The phantom COIN generic type indicates the coin this listing is being sold for. Note
@@ -41,8 +42,8 @@ module ticketland::secondary_market {
     price: Coin<T>,
     /// The buyer making this offer
     buyer: address,
-    /// The index of the ticket type a buyer is willing to purchase
-    ticket_type_index: u64,
+    /// The CNT ticket type id (as address)
+    ticket_type_id: address,
   }
 
   /// Allows the owner of the given ticket to list it for sale.
@@ -110,7 +111,19 @@ module ticketland::secondary_market {
     object::delete(id);
   }
 
-  public entry fun offer() {
+  public entry fun offer<T>(
+    event: &Event,
+    ticket_type_id: address,
+    price: Coin<T>,
+    ctx: &mut TxContext,
+  ) {
+    assert!(has_ticket_type(event, ticket_type_id), E_WRONG_TICKET_TYPE);
+
+    let offer = Offer<T> {
+      id: object::new(ctx),
+      price: Balance<SUI>,
+      ticket_type_id,
+    };
 
   }
 
