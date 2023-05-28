@@ -33,4 +33,11 @@ module ticketland::collection_utils {
 
     EQUAL
   }
+
+  public fun concat_ascii_strings(a: ascii::String, b: ascii::String): ascii::String {
+    let vec_str = ascii::into_bytes(a);
+    vector::append(&mut vec_str, ascii::into_bytes(b));
+    
+    ascii::string(vec_str)
+  }
 }

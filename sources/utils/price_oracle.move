@@ -3,7 +3,7 @@ module ticketland::price_oracle {
   use sui::transfer::{transfer, share_object};
   use sui::object::{Self, UID};
   use sui::vec_map::{Self, VecMap};
-  use ticketland::collection_utils::{compare_ascii_strings};
+  use ticketland::collection_utils::{compare_ascii_strings, concat_ascii_strings};
   use std::vector;
   use std::ascii;
 
@@ -19,8 +19,8 @@ module ticketland::price_oracle {
   struct ExchangeRate has key {
     id: UID,
     // The exhange rate from token0 to token1. Note token0 and token1 are sorted so it's
-    // token0 => token1 => exchange_rate
-    inner: VecMap<ascii::String, VecMap<ascii::String, u64>>,
+    // token0:token1 => exchange_rate
+    inner: VecMap<ascii::String, u64>,
   }
 
   /// Module initializer to be executed when this module is published by the the Sui runtime
@@ -39,9 +39,10 @@ module ticketland::price_oracle {
   }
 
   public fun update_exchange_rates(
-    _cap: &AdminCap,
     coins: vector<vector<ascii::String>>,
     rates: vector<u64>,
+    _cap: &AdminCap,
+    exhange_rate: &mut ExchangeRate,
   ) {
     let len = vector::length(&coins);
     assert!(len == vector::length(&rates), E_LEN_MISMATCH);
@@ -52,13 +53,14 @@ module ticketland::price_oracle {
       let from = vector::borrow(pair, 0);
       let to = vector::borrow(pair, 1);
 
-      let (from, to) = if (compare_ascii_strings(from, to) == SMALLER) {
+      let (coin0, coin1) = if (compare_ascii_strings(from, to) == SMALLER) {
         (from, to)
       } else {
         (to, from)
       };
 
-      // vec_map::insert(&mut config.supported_coins, coin_type, true);
+      let rate = *vector::borrow(&rates, i);
+      vec_map::insert(&mut exhange_rate.inner, concat_ascii_strings(*coin0, *coin1), rate);
 
       i = i + 1;
     };
