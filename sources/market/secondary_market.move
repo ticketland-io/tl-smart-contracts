@@ -6,7 +6,7 @@ module ticketland::secondary_market {
   use std::option::{Self, is_some};
   use sui::coin::{Coin};
   use ticketland::price_oracle::{ExchangeRate, exchange_value};
-  use ticketland::event::{Event, get_resale_cap_bps, get_event_id, is_ticket_type_of_event};
+  use ticketland::event::{Event, get_resale_cap_bps, get_event_id, has_ticket_type};
   use ticketland::ticket::{Self, CNT, get_cnt_event_id, get_cnt_id, get_paid_amount, share_cnt};
 
   /// Constants
@@ -36,7 +36,7 @@ module ticketland::secondary_market {
   }
 
   /// A shared object describing an offer a buyer makes to purchase a ticket
-  struct Offer<T> has key {
+  struct Offer<phantom T> has key {
     id: UID,
     /// The amount the buyer is willing to pay to purchase a Ticket
     price: Coin<T>,
@@ -119,12 +119,15 @@ module ticketland::secondary_market {
   ) {
     assert!(has_ticket_type(event, ticket_type_id), E_WRONG_TICKET_TYPE);
 
+    let buyer = sender(ctx);
     let offer = Offer<T> {
       id: object::new(ctx),
-      price: Balance<SUI>,
+      price,
+      buyer,
       ticket_type_id,
     };
 
+    share_object(offer);
   }
 
   public entry fun cancel_offer() {

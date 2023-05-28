@@ -16,6 +16,7 @@ module ticketland::event_registry {
   struct Config has key {
     id: UID,
     /// The list of supported coins that can be used in purchases. The string value is a sui::type_name::TypeName
+    /// Note it's the TypeName of T and not Coin<T>. The latter is redundant
     supported_coins: VecMap<ascii::String, bool>,
     /// The fees collected by the protocol during various interaction i.e. primary sale, secondary etc.
     protocol_fee: u64,
