@@ -48,10 +48,7 @@ module ticketland::attendance {
 
   /// A function that is called by the event organizer and transfers a new operator cap to the given address
   /// This must be called right after an event is created.
-  public(friend) fun create_op_cap(
-    event_id: address,
-    ctx: &mut TxContext
-  ): OperatorCap {
+  public(friend) fun create_op_cap(event_id: address, ctx: &mut TxContext): OperatorCap {
     OperatorCap {
       id: object::new(ctx),
       event_id,
@@ -76,10 +73,7 @@ module ticketland::attendance {
 
   /// Called by the onwer of CNT to update the `attended` field of the CNT object.
   /// One of the operators must have called `set_attended` before for this function to succeed.
-  public entry fun confirm_attended(
-    cnt: &mut CNT,
-    config: &mut Config,
-  ) {
+  public entry fun confirm_attended(cnt: &mut CNT, config: &mut Config) {
     let cnt_id = get_cnt_id(cnt);
     assert!(has_attended(cnt_id, config), E_DID_NOT_ATTEND);
 
