@@ -2,6 +2,7 @@ module ticketland::ticket {
   use sui::package;
   use sui::display;
   use std::vector;
+  use std::option::{Option};
   use sui::object::{Self, UID, uid_to_address};
   use sui::transfer::{Self, public_transfer, share_object};
   use sui::tx_context::{TxContext, sender};
@@ -75,8 +76,7 @@ module ticketland::ticket {
     e_id: String,
     /// The name of the CNT
     name: String,
-    /// The price this CNT was sold for
-    paid: u64,
+    payment_info: PaymentInfo,
     /// Seat Index
     seat_index: String,
     /// The seat name
@@ -85,6 +85,13 @@ module ticketland::ticket {
     attended: bool,
     /// All attached NFT tickets
     attached_nfts: ObjectBag,
+  }
+
+  struct PaymentInfo {
+    /// The coin that was used to pay the `paid` amount. The coin type is the sui::type_name::TypeName
+    coin_type: Option<String>, 
+    /// The price this CNT was sold for
+    paid: u64,
   }
 
   fun init(otw: TICKET, ctx: &mut TxContext) {
@@ -239,6 +246,7 @@ module ticketland::ticket {
     name: String,
     seat_index: String,
     seat_name: String,
+    coin_type: Option<String>,
     paid: u64,
     ctx: &mut TxContext,
   ): address {
@@ -253,7 +261,7 @@ module ticketland::ticket {
       name,
       seat_index,
       seat_name,
-      paid,
+      payment_info: PaymentInfo {coin_type, paid},
       attended: false,
       attached_nfts: object_bag::new(ctx),
     };

@@ -3,6 +3,7 @@ module ticketland::secondary_market {
   use sui::tx_context::{TxContext, sender};
   use sui::transfer::{share_object};
   use sui::coin::{Coin};
+  use sui::vec_map::{Self, VecMap};
   use ticketland::event::{Event, get_resale_cap_bps, get_event_id};
   use ticketland::ticket::{Self, CNT, get_cnt_event_id, get_cnt_id, get_paid_amount, share_cnt};
 
@@ -16,6 +17,7 @@ module ticketland::secondary_market {
   const E_ONLY_LISTING_OWNER: u64 = 3;
   
   /// A shared object describing a listing
+  /// The phantom Listing generic type indicates the coin this listing is being sold for
   struct Listing has key {
     id: UID,
     /// The id CNT object that is being listed for sale
@@ -50,7 +52,7 @@ module ticketland::secondary_market {
     let max_allowed_price = (get_paid_amount(&cnt) * (get_resale_cap_bps(event) as u64)) / BASIS_POINTS;
     assert!(price <= max_allowed_price, E_MAX_PRICE_VIOLATION);
 
-    let listing = Listing {
+    let listing = Listing<COIN> {
       id: object::new(ctx),
       cnt_id: get_cnt_id(&cnt),
       price,
@@ -65,9 +67,9 @@ module ticketland::secondary_market {
   }
 
   /// Allows the onwer of the listing to cancel it
-  public entry fun cancel_listing(
+  public entry fun cancel_listing<COIN>(
     cnt: CNT,
-    listing: Listing,
+    listing: Listing<COIN>,
     ctx: &mut TxContext,
   ) {
     let owner = sender(ctx);
@@ -78,13 +80,14 @@ module ticketland::secondary_market {
     ticket::transfer(cnt, owner);
   }
 
-  fun drop_listing(listing: Listing) {
-    let Listing {id, cnt_id: _, price: _, seller: _} = listing;
-    object::delete(id);
-  }
-
+  /// Allows anyone to purchase the listing by sending the correct amount of the given coin type.
   public entry fun purchase_listing(cnt: CNT, ctx: &mut TxContext) {
     ticket::transfer(cnt, sender(ctx))
+  }
+
+  fun drop_listing<COIN>(listing: Listing<COIN>) {
+    let Listing {id, cnt_id: _, price: _, seller: _} = listing;
+    object::delete(id);
   }
 
   public entry fun offer() {

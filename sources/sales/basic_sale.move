@@ -2,6 +2,7 @@
 module ticketland::basic_sale {
   use sui::tx_context::{TxContext, sender};
   use std::string::{String};
+  use std::option::{some, none};
   use sui::transfer::{transfer, public_transfer};
   use std::type_name;
   use sui::object::{Self, UID, delete};
@@ -54,6 +55,7 @@ module ticketland::basic_sale {
       ticket_name,
       u64_to_str(seat_index),
       seat_name,
+      none(),
       paid,
       ctx,
     )
@@ -92,6 +94,7 @@ module ticketland::basic_sale {
       ticket_name,
       u64_to_str(seat_index),
       seat_name,
+      some(coin_type),
       price,
       ctx,
     );
@@ -124,6 +127,7 @@ module ticketland::basic_sale {
       ticket_name,
       u64_to_str(seat_index),
       seat_name,
+      some(coin_type),
       price,
       ctx,
     );
