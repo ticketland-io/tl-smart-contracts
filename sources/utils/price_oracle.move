@@ -71,6 +71,15 @@ module ticketland::price_oracle {
     to: ascii::String,
     exhange_rate: &mut ExchangeRate,
   ): u64 {
-    *vec_map::get(&exhange_rate.inner, &concat_ascii_strings(from, to))
+    let rate = *vec_map::get(&exhange_rate.inner, &concat_ascii_strings(from, to));
+
+    // if from is smallet then we just return the rate because that's how it's stored.
+    // else we need to convert the rate into the symetrical value. For example is 1 SUI => 0.5 USDC then
+    // if from is SUI we just return 0.5 else we return 1/0.5 = 2
+    if(compare_ascii_strings(&from, &to) == SMALLER) {
+      rate
+    } else {
+      1 / rate
+    }
   }
 }

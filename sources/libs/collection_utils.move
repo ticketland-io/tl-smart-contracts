@@ -34,7 +34,10 @@ module ticketland::collection_utils {
     EQUAL
   }
 
+  // It will first sort the string and the concat
   public fun concat_ascii_strings(a: ascii::String, b: ascii::String): ascii::String {
+    let (a, b) = if(compare_ascii_strings(&a, &b) == SMALLER) (a, b) else (b, a);
+
     let vec_str = ascii::into_bytes(a);
     vector::append(&mut vec_str, ascii::into_bytes(b));
     
