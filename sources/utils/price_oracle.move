@@ -82,4 +82,13 @@ module ticketland::price_oracle {
       1 / rate
     }
   }
+
+  public fun exchange_value(
+    from: ascii::String,
+    to: ascii::String,
+    value: u64,
+    exhange_rate: &mut ExchangeRate,
+  ): u64 {
+    value * get_exchange_rate(from, to, exhange_rate)
+  }
 }
