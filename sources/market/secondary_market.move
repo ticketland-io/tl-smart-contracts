@@ -4,12 +4,15 @@ module ticketland::secondary_market {
   use sui::transfer::{share_object, public_transfer};
   use std::type_name;
   use std::option::{Self, is_some};
-  use sui::coin::{Coin, destroy_zero, split};
+  use sui::coin::{Coin, split, value, destroy_zero};
   use ticketland::price_oracle::{ExchangeRate, exchange_value};
   use ticketland::market_utils::{split_payable_amount};
   use ticketland::event_registry::{Config};
   use ticketland::event::{Event, get_resale_cap_bps, get_event_id, has_ticket_type};
-  use ticketland::ticket::{Self, CNT, get_cnt_event_id, get_cnt_id, get_paid_amount, share_cnt};
+  use ticketland::ticket::{
+    Self, CNT, get_cnt_event_id, get_cnt_id, get_paid_amount, share_cnt,
+    get_cnt_ticket_type_id,
+  };
 
   /// Constants
   const BASIS_POINTS: u64 = 10_000;
@@ -129,6 +132,7 @@ module ticketland::secondary_market {
     object::delete(id);
   }
 
+  /// Allows anyone to creat an offer for a ticket of the given type
   public entry fun offer<T>(
     event: &Event,
     ticket_type_id: address,
@@ -148,10 +152,7 @@ module ticketland::secondary_market {
     share_object(offer);
   }
 
-  public entry fun cancel_offer<T>(
-    offer: Offer<T>,
-    ctx: &mut TxContext,
-  ) {
+  public entry fun cancel_offer<T>(offer: Offer<T>, ctx: &mut TxContext) {
     let owner = sender(ctx);
     let Offer {id, price, buyer, ticket_type_id: _} = offer;
     assert!(buyer == owner, E_ONLY_OFFER_OWNER);
@@ -160,7 +161,26 @@ module ticketland::secondary_market {
     object::delete(id);
   }
 
-  public entry fun purchase_offer() {
+  public entry fun purchase_offer<T>(
+    cnt: CNT,
+    offer: Offer<T>,
+    config: &Config,
+    ctx: &mut TxContext
+  ) {
+    assert!(offer.ticket_type_id == get_cnt_ticket_type_id(&cnt), E_WRONG_TICKET_TYPE);
     
+    let seller = sender(ctx);
+    let Offer {id, price, buyer, ticket_type_id: _} = offer;
+    let (fees, payable_amount, protocol_fee_address) = split_payable_amount<T>(&price, value(&price), config);
+
+    // tranfer funds to protocol and seller
+    public_transfer(split(&mut price, fees, ctx), protocol_fee_address);
+    public_transfer(split(&mut price, payable_amount, ctx), seller);
+
+    // tranfer the Ticket to the buyer
+    ticket::transfer(cnt, buyer);
+
+    destroy_zero(price);
+    object::delete(id);
   }
 }
