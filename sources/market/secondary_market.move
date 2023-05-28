@@ -3,7 +3,6 @@ module ticketland::secondary_market {
   use sui::tx_context::{TxContext, sender};
   use sui::transfer::{share_object};
   use sui::coin::{Coin};
-  use sui::vec_map::{Self, VecMap};
   use ticketland::event::{Event, get_resale_cap_bps, get_event_id};
   use ticketland::ticket::{Self, CNT, get_cnt_event_id, get_cnt_id, get_paid_amount, share_cnt};
 
@@ -18,7 +17,7 @@ module ticketland::secondary_market {
   
   /// A shared object describing a listing
   /// The phantom Listing generic type indicates the coin this listing is being sold for
-  struct Listing has key {
+  struct Listing<phantom COIN> has key {
     id: UID,
     /// The id CNT object that is being listed for sale
     cnt_id: address,
@@ -42,14 +41,15 @@ module ticketland::secondary_market {
   /// Allows the owner of the given ticket to list it for sale.
   /// The provided price must not exceed the allowed max resale cap value.
   /// The CNT is an owned object which will become shared so it can be later in the purchase_listing fun
-  public entry fun list(
+  public entry fun list<COIN>(
     event: &Event,
     cnt: CNT,
     price: u64,
     ctx: &mut TxContext
   ) {
     assert!(get_event_id(event) == get_cnt_event_id(&cnt), E_CNT_EVENT_MISMATCH);
-    let max_allowed_price = (get_paid_amount(&cnt) * (get_resale_cap_bps(event) as u64)) / BASIS_POINTS;
+    let (_, paid) = get_paid_amount(&cnt);
+    let max_allowed_price = (paid * (get_resale_cap_bps(event) as u64)) / BASIS_POINTS;
     assert!(price <= max_allowed_price, E_MAX_PRICE_VIOLATION);
 
     let listing = Listing<COIN> {

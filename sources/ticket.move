@@ -7,6 +7,7 @@ module ticketland::ticket {
   use sui::transfer::{Self, public_transfer, share_object};
   use sui::tx_context::{TxContext, sender};
   use std::string::{utf8, String};
+  use std::ascii;
   use sui::vec_map::{Self, VecMap};
   use sui::object_bag::{Self, ObjectBag};
   use ticketland::event::{
@@ -76,6 +77,7 @@ module ticketland::ticket {
     e_id: String,
     /// The name of the CNT
     name: String,
+    /// Information about the payment in the primary market when this CNT was created
     payment_info: PaymentInfo,
     /// Seat Index
     seat_index: String,
@@ -87,9 +89,9 @@ module ticketland::ticket {
     attached_nfts: ObjectBag,
   }
 
-  struct PaymentInfo {
+  struct PaymentInfo has store {
     /// The coin that was used to pay the `paid` amount. The coin type is the sui::type_name::TypeName
-    coin_type: Option<String>, 
+    coin_type: Option<ascii::String>, 
     /// The price this CNT was sold for
     paid: u64,
   }
@@ -153,8 +155,8 @@ module ticketland::ticket {
     cnt.event_id
   }
 
-  public fun get_paid_amount(cnt: &CNT): u64 {
-    cnt.paid
+  public fun get_paid_amount(cnt: &CNT): (Option<ascii::String>, u64) {
+    (cnt.payment_info.coin_type, cnt.payment_info.paid)
   }
 
   /// It will make sure that all VecMaps until the most inner one have been initialized.
@@ -246,7 +248,7 @@ module ticketland::ticket {
     name: String,
     seat_index: String,
     seat_name: String,
-    coin_type: Option<String>,
+    coin_type: Option<ascii::String>,
     paid: u64,
     ctx: &mut TxContext,
   ): address {

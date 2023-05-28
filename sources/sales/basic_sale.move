@@ -73,10 +73,7 @@ module ticketland::basic_sale {
   ): (address, u64, u64) {
     let ticket_type = get_ticket_type(event, ticket_type_index);
     let coin_type = type_name::into_string(type_name::get<Coin<T>>());
-    let price = get_fixed_price_amount(
-      get_sale_type<FixedPrice>(event, ticket_type_index),
-      coin_type,
-    );
+    let price = get_fixed_price_amount(get_sale_type<FixedPrice<Coin<T>>>(event, ticket_type_index),);
 
     assert!(value(coins) >= price, E_INSUFFICIENT_BALANCE);
     let (protocol_fee, protocol_fee_address) = get_protocol_info(config);
@@ -114,8 +111,7 @@ module ticketland::basic_sale {
     let ticket_type = get_ticket_type(event, ticket_type_index);
     let coin_type = type_name::into_string(type_name::get<Coin<T>>());
     let price = get_refundable_price_amount(
-      get_sale_type<Refundable>(event, ticket_type_index),
-      coin_type,
+      get_sale_type<Refundable<Coin<T>>>(event, ticket_type_index),
     );
 
     assert!(value(coins) >= price, E_INSUFFICIENT_BALANCE);
