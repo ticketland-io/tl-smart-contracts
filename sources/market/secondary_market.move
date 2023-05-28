@@ -60,15 +60,16 @@ module ticketland::secondary_market {
     assert!(is_some(&coin_type), E_ONLY_PURCHASED_TICKETS);
 
     let listing_coin_type = type_name::into_string(type_name::get<COIN>());
-    // get the correct exchange rate
-    let price = exchange_value(
+    // get the correct exchange rate. If Ticket was purchased in Coin0 and we want to list in Coin1
+    // then in order to verify the max resale cap we need to conver the value into Coin0
+    let paid = exchange_value(
       *option::borrow(&coin_type),
       listing_coin_type,
-      price,
+      paid,
       exhange_rate
     );
 
-    let max_allowed_price = (paid * (get_resale_cap_bps(event) as u64)) / BASIS_POINTS;
+    let max_allowed_price = paid * (BASIS_POINTS + (get_resale_cap_bps(event) as u64)) / BASIS_POINTS;
     assert!(price <= max_allowed_price, E_MAX_PRICE_VIOLATION);
 
     let listing = Listing<COIN> {
