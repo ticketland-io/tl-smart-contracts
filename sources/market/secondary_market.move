@@ -21,6 +21,7 @@ module ticketland::secondary_market {
   const E_ONLY_LISTING_OWNER: u64 = 3;
   const E_ONLY_PURCHASED_TICKETS: u64 = 4;
   const E_WRONG_TICKET_TYPE: u64 = 5;
+  const E_ONLY_OFFER_OWNER: u64 = 6;
   
   /// A shared object describing a listing
   /// The phantom COIN generic type indicates the coin this listing is being sold for. Note
@@ -99,8 +100,8 @@ module ticketland::secondary_market {
     assert!(listing.seller == owner, E_ONLY_LISTING_OWNER);
     assert!(listing.cnt_id == get_cnt_id(&cnt), E_CNT_LISTING_MISMATCH);
 
-    drop_listing(listing);
     ticket::transfer(cnt, owner);
+    drop_listing(listing);
   }
 
   /// Allows anyone to purchase the listing by sending the correct amount of the given coin type.
@@ -147,17 +148,19 @@ module ticketland::secondary_market {
     share_object(offer);
   }
 
-  public entry fun cancel_offer() {
-    
+  public entry fun cancel_offer<T>(
+    offer: Offer<T>,
+    ctx: &mut TxContext,
+  ) {
+    let owner = sender(ctx);
+    let Offer {id, price, buyer, ticket_type_id: _} = offer;
+    assert!(buyer == owner, E_ONLY_OFFER_OWNER);
+  
+    public_transfer(price, owner);
+    object::delete(id);
   }
 
   public entry fun purchase_offer() {
     
-  }
-
-  fun drop_offer<T>(offer: Offer<T>) {
-    let Offer {id, price, buyer: _, ticket_type_id: _} = offer;
-    destroy_zero(price);
-    object::delete(id);
   }
 }
