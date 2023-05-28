@@ -58,7 +58,6 @@ module ticketland::event_registry {
     protocol_fee: u64,
     protocol_fee_address: address,
     operators: vector<address>,
-    _ctx: &mut TxContext,
   ) {
     // reset old vec_map
     config.supported_coins = vec_map::empty();

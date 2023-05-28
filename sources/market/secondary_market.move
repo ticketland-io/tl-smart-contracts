@@ -16,7 +16,10 @@ module ticketland::secondary_market {
   const E_ONLY_LISTING_OWNER: u64 = 3;
   
   /// A shared object describing a listing
-  /// The phantom Listing generic type indicates the coin this listing is being sold for
+  /// The phantom COIN generic type indicates the coin this listing is being sold for. Note
+  /// that the COIN must be the same as the one that was used during the primary sale. This limitation
+  /// is currently in place because we don't have an oracle in place. The price is used in the resale cap
+  /// asserrtion so it is important that we compare values of same currency.
   struct Listing<phantom COIN> has key {
     id: UID,
     /// The id CNT object that is being listed for sale

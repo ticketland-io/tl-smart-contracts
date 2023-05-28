@@ -1,33 +1,15 @@
 module ticketland::merkle_tree {
   use std::vector;
   use std::hash::sha3_256;
+  use ticketland::collection_utils::{compare_vector};
 
-  const EQUAL: u8 = 0;
-  const BIGGER: u8 = 1;
+  /// Constants
+  const EQUAL: u8 = 2;
   const SMALLER: u8 = 2;
 
+  /// Errors
   const E_VERIFICATION_FAILED: u64 = 0;
-  const E_LENGTH_INVALID: u64 = 1;
 
-  fun compare_vector(a: &vector<u8>, b: &vector<u8>): u8 {
-    let len = vector::length(a);
-    let i = 0;
-    assert!(vector::length(b) == len, E_LENGTH_INVALID);
-
-    while(i < len){
-      if(*vector::borrow(a, i) > *vector::borrow(b, i)) {
-        return BIGGER
-      };
-
-      if(*vector::borrow(a, i) < *vector::borrow(b, i)) {
-        return SMALLER
-      };
-
-      i = i + 1;
-    };
-
-    EQUAL
-  }
 
   fun hash_pair(a: vector<u8>, b: vector<u8>): vector<u8> {
     if (compare_vector(&a, &b) == SMALLER) {

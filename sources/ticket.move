@@ -2,12 +2,11 @@ module ticketland::ticket {
   use sui::package;
   use sui::display;
   use std::vector;
-  use std::option::{Self, Option};
+  use std::option::{Option};
   use sui::object::{Self, UID, uid_to_address};
   use sui::transfer::{Self, public_transfer, share_object};
   use sui::tx_context::{TxContext, sender};
   use std::string::{utf8, String};
-  use std::type_name;
   use std::ascii;
   use sui::vec_map::{Self, VecMap};
   use sui::object_bag::{Self, ObjectBag};
@@ -158,15 +157,8 @@ module ticketland::ticket {
   }
 
   /// Returns the payment information of the given CNT
-  /// Will abort if the given generic COIN param is not the sale as the coin that was used
-  /// to purchase the CNT in the first place.
-  public fun get_paid_amount<COIN>(cnt: &CNT): (ascii::String, u64) {
-    let coin_type = type_name::into_string(type_name::get<COIN>());
-    let stored_coin_type = option::borrow(&cnt.payment_info.coin_type);
-    
-    assert!(coin_type == *stored_coin_type, E_WRONG_COIN_TYPE);
-
-    (*stored_coin_type, cnt.payment_info.paid)
+  public fun get_paid_amount<COIN>(cnt: &CNT): (Option<ascii::String>, u64) {
+    (cnt.payment_info.coin_type, cnt.payment_info.paid)
   }
 
   /// It will make sure that all VecMaps until the most inner one have been initialized.
