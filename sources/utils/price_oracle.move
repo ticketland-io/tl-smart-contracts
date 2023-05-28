@@ -65,4 +65,12 @@ module ticketland::price_oracle {
       i = i + 1;
     };
   }
+
+  public fun get_exchange_rate(
+    from: ascii::String,
+    to: ascii::String,
+    exhange_rate: &mut ExchangeRate,
+  ): u64 {
+    *vec_map::get(&exhange_rate.inner, &concat_ascii_strings(from, to))
+  }
 }
