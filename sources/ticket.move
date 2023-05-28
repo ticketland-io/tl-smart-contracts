@@ -158,11 +158,13 @@ module ticketland::ticket {
   }
 
   /// Returns the payment information of the given CNT
+  /// Will abort if the given generic COIN param is not the sale as the coin that was used
+  /// to purchase the CNT in the first place.
   public fun get_paid_amount<COIN>(cnt: &CNT): (ascii::String, u64) {
     let coin_type = type_name::into_string(type_name::get<COIN>());
     let stored_coin_type = option::borrow(&cnt.payment_info.coin_type);
     
-    assert!(coin_type == *stored_coin_type, E_NOT_EVENT_TICKET_TYPE);
+    assert!(coin_type == *stored_coin_type, E_WRONG_COIN_TYPE);
 
     (*stored_coin_type, cnt.payment_info.paid)
   }
