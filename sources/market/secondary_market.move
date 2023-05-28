@@ -4,7 +4,7 @@ module ticketland::secondary_market {
   use sui::transfer::{share_object};
   use std::type_name;
   use std::option::{Self, is_some};
-  use sui::coin::{Coin};
+  use sui::coin::{Coin, destroy_zero};
   use ticketland::price_oracle::{ExchangeRate, exchange_value};
   use ticketland::event::{Event, get_resale_cap_bps, get_event_id, has_ticket_type};
   use ticketland::ticket::{Self, CNT, get_cnt_event_id, get_cnt_id, get_paid_amount, share_cnt};
@@ -136,5 +136,11 @@ module ticketland::secondary_market {
 
   public entry fun purchase_offer() {
     
+  }
+
+  fun drop_offer<T>(offer: Offer<T>) {
+    let Offer {id, price, buyer: _, ticket_type_id: _} = offer;
+    destroy_zero(price);
+    object::delete(id);
   }
 }
