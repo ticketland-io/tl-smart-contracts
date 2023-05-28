@@ -1,11 +1,13 @@
 module ticketland::secondary_market {
   use sui::object::{Self, UID};
   use sui::tx_context::{TxContext, sender};
-  use sui::transfer::{share_object};
+  use sui::transfer::{share_object, public_transfer};
   use std::type_name;
   use std::option::{Self, is_some};
-  use sui::coin::{Coin, destroy_zero};
+  use sui::coin::{Coin, destroy_zero, split};
   use ticketland::price_oracle::{ExchangeRate, exchange_value};
+  use ticketland::market_utils::{split_payable_amount};
+  use ticketland::event_registry::{Config};
   use ticketland::event::{Event, get_resale_cap_bps, get_event_id, has_ticket_type};
   use ticketland::ticket::{Self, CNT, get_cnt_event_id, get_cnt_id, get_paid_amount, share_cnt};
 
@@ -102,8 +104,23 @@ module ticketland::secondary_market {
   }
 
   /// Allows anyone to purchase the listing by sending the correct amount of the given coin type.
-  public entry fun purchase_listing(cnt: CNT, ctx: &mut TxContext) {
-    ticket::transfer(cnt, sender(ctx))
+  public entry fun purchase_listing<T>(
+    cnt: CNT,
+    listing: Listing<T>,
+    coins: &mut Coin<T>,
+    config: &Config,
+    ctx: &mut TxContext
+  ) {
+    let buyer = sender(ctx);
+    let (fees, payable_amount, protocol_fee_address) = split_payable_amount<T>(coins, listing.price, config);
+    
+    // tranfer funds to protocol and seller
+    public_transfer(split(coins, fees, ctx), protocol_fee_address);
+    public_transfer(split(coins, payable_amount, ctx), listing.seller);
+
+    // tranfer the Ticket to the buyer
+    ticket::transfer(cnt, buyer);
+    drop_listing(listing);
   }
 
   fun drop_listing<COIN>(listing: Listing<COIN>) {

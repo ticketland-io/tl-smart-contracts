@@ -6,12 +6,13 @@ module ticketland::basic_sale {
   use sui::transfer::{transfer, public_transfer};
   use std::type_name;
   use sui::object::{Self, UID, delete};
-  use sui::coin::{Coin, value, split};
+  use sui::coin::{Coin, split};
   use ticketland::ticket::{Self, CNT, get_cnt_id};
   use ticketland::num_utils::{u64_to_str};
   use ticketland::event::{get_event_creator};
   use ticketland::attendance::{Self, has_attended};
-  use ticketland::event_registry::{Config, get_protocol_info};
+  use ticketland::market_utils::{has_enough_balance, split_payable_amount};
+  use ticketland::event_registry::{Config};
   use ticketland::sale_type::{
     FixedPrice, Refundable, get_fixed_price_amount, get_refundable_price_amount
   };
@@ -25,7 +26,6 @@ module ticketland::basic_sale {
   const BASIS_POINTS: u64 = 10_000;
 
   /// Errors
-  const E_INSUFFICIENT_BALANCE: u64 = 0;
   const E_DID_NOT_ATTEND: u64 = 0;
 
   // Holds the coins paid for refundable tickets
@@ -74,11 +74,7 @@ module ticketland::basic_sale {
     let ticket_type = get_ticket_type(event, ticket_type_index);
     let coin_type = type_name::into_string(type_name::get<T>());
     let price = get_fixed_price_amount(get_sale_type<FixedPrice<T>>(event, ticket_type_index),);
-
-    assert!(value(coins) >= price, E_INSUFFICIENT_BALANCE);
-    let (protocol_fee, protocol_fee_address) = get_protocol_info(config);
-    let fees = (price * protocol_fee) / BASIS_POINTS;
-    let payable_amount = price - fees;
+    let (fees, payable_amount, protocol_fee_address) = split_payable_amount<T>(coins, price, config);
 
     // tranfer funds
     public_transfer(split(coins, fees, ctx), protocol_fee_address);
@@ -113,8 +109,8 @@ module ticketland::basic_sale {
     let price = get_refundable_price_amount(
       get_sale_type<Refundable<T>>(event, ticket_type_index),
     );
-
-    assert!(value(coins) >= price, E_INSUFFICIENT_BALANCE);
+    
+    has_enough_balance<T>(coins, price);
 
     let cnt_id = ticket::mint_cnt(
       get_event_id(event),
