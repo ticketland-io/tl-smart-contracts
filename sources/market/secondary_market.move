@@ -48,7 +48,7 @@ module ticketland::secondary_market {
     ctx: &mut TxContext
   ) {
     assert!(get_event_id(event) == get_cnt_event_id(&cnt), E_CNT_EVENT_MISMATCH);
-    let (_, paid) = get_paid_amount(&cnt);
+    let (_, paid) = get_paid_amount<COIN>(&cnt);
     let max_allowed_price = (paid * (get_resale_cap_bps(event) as u64)) / BASIS_POINTS;
     assert!(price <= max_allowed_price, E_MAX_PRICE_VIOLATION);
 
