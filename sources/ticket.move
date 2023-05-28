@@ -14,6 +14,7 @@ module ticketland::ticket {
 
   friend ticketland::basic_sale;
   friend ticketland::attendance;
+  friend ticketland::secondary_market;
 
   /// constants
   const MAX_NFT_PER_TICKET_TYPE: u64 = 10;
@@ -75,7 +76,7 @@ module ticketland::ticket {
     /// The name of the CNT
     name: String,
     /// The price this CNT was sold for
-    price_sold: u64,
+    paid: u64,
     /// Seat Index
     seat_index: String,
     /// The seat name
@@ -100,7 +101,7 @@ module ticketland::ticket {
       utf8(b"{name}"),
       utf8(b"{e_id}"),
       utf8(b"https://app.ticketland/events/{e_id}"),
-      utf8(b"{price_sold}"),
+      utf8(b"{paid}"),
       utf8(b"{seat_index}"),
       utf8(b"{seat_name}"),
     ];
@@ -143,6 +144,10 @@ module ticketland::ticket {
 
   public fun get_cnt_event_id(cnt: &CNT): address {
     cnt.event_id
+  }
+
+  public fun get_paid_amount(cnt: &CNT): u64 {
+    cnt.paid
   }
 
   /// It will make sure that all VecMaps until the most inner one have been initialized.
@@ -234,7 +239,7 @@ module ticketland::ticket {
     name: String,
     seat_index: String,
     seat_name: String,
-    price_sold: u64,
+    paid: u64,
     ctx: &mut TxContext,
   ): address {
     let id = object::new(ctx);
@@ -248,7 +253,7 @@ module ticketland::ticket {
       name,
       seat_index,
       seat_name,
-      price_sold,
+      paid,
       attended: false,
       attached_nfts: object_bag::new(ctx),
     };
@@ -256,6 +261,18 @@ module ticketland::ticket {
     transfer::transfer(cnt, sender(ctx));
 
     cnt_id
+  }
+
+  /// The CNT struct intentionally does not have the store ability because we don't want native transfer of that object.
+  /// At the same time the CNT can be listed for sale. Ideally, we would wrap the CNT object in a listing object and then
+  /// transfer it to the buyer upon successful trade. However, because the CNT object does not have the store ability
+  /// it cannot be wrapped. To circumvent that, we can make the CNT shared when seller lists it for sale. Being shared is tricky
+  /// because it can be access and modified by anyone. But because the CNT object is defined in this module, we are sure that
+  /// such mutation are impossible to happen. In fact, we MUST be careful not to allow such mutation at all.
+  /// THe CNT can later become owned again by calling the `transfer` of this module which is can only be called by friend modules
+  /// so we don't risk any unintended behaviour.
+  public(friend) fun share_cnt(cnt: CNT) {
+    share_object(cnt)
   }
 
   /// Allows the event organizer to register new (or update existing) Ticket NFT descriptions. Any arbitraty number

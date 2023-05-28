@@ -45,7 +45,7 @@ module ticketland::basic_sale {
     ctx: &mut TxContext
   ): address {
     let ticket_type = get_ticket_type(event, ticket_type_index);
-    let price_sold = 0;
+    let paid = 0;
 
     ticket::mint_cnt(
       get_event_id(event),
@@ -54,7 +54,7 @@ module ticketland::basic_sale {
       ticket_name,
       u64_to_str(seat_index),
       seat_name,
-      price_sold,
+      paid,
       ctx,
     )
   }

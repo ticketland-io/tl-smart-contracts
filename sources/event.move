@@ -221,6 +221,14 @@ module ticketland::event {
     &ticket_type.mt_root
   }
 
+  public fun get_resale_cap_bps(event: &Event): u16 {
+    event.resale_cap_bps
+  }
+
+  public fun get_royalty_bps(event: &Event): u16 {
+    event.royalty_bps
+  }
+
   fun create_event_capacity(): EventCapacity {
     EventCapacity {
       tickets_sold: 0,
