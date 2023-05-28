@@ -90,6 +90,8 @@ module ticketland::event_registry {
   /// * `n_tickets` - The number of ticket available for this event
   /// * `start_time` - The event start time
   /// * `end_time` - The event end time
+  /// * `resale_cap_bps` - The max increase from previous price a ticket can be sold for. This is 10_000 basis point
+  /// * `royalty_bps` - The resale fee basis points i.e. royalty fees
   public(friend) entry fun create_event(
     e_id: String,
     name: String,
@@ -98,6 +100,8 @@ module ticketland::event_registry {
     n_tickets: u32,
     start_time: u64,
     end_time: u64,
+    resale_cap_bps: u16,
+    royalty_bps: u16,
     config: &Config,
     ctx: &mut TxContext
   ) {
@@ -109,6 +113,8 @@ module ticketland::event_registry {
       n_tickets,
       start_time,
       end_time,
+      resale_cap_bps,
+      royalty_bps,
       ctx,
     );
 

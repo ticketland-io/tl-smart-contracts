@@ -65,6 +65,10 @@ module ticketland::event {
     start_time: u64,
     /// The end time of the event
     end_time: u64,
+    /// Resale cap. The max increase from previous price a ticket can be sold for. This is 10_000 basis point
+    resale_cap_bps: u16,
+    /// The resale fee basis points i.e. royalty fees
+    royalty_bps: u16,
     /// The event capacity data
     event_capacity: EventCapacity,
     /// The different ticket type variants
@@ -130,6 +134,8 @@ module ticketland::event {
       utf8(b"Image Uri"),
       utf8(b"Link"),
       utf8(b"Creator"),
+      utf8(b"Resale Cap BPS"),
+      utf8(b"Roaylty BPS"),
     ];
 
     let event_nft_values = vector[
@@ -139,6 +145,8 @@ module ticketland::event {
       utf8(b"{image_uri}"),
       utf8(b"https://app.ticketland/events/{e_id}"),
       address::to_string(creator),
+      utf8(b"{resale_cap_bps}"),
+      utf8(b"{royalty_bps}"),
     ];
 
     let publisher = package::claim(otw, ctx);
@@ -149,7 +157,6 @@ module ticketland::event {
     public_transfer(publisher, creator);
     public_transfer(display, creator);
   }
-
 
   public(friend) fun get_event_organizer_cap_event_id(cap: &EventOrganizerCap): address {
     cap.event_id
@@ -240,6 +247,8 @@ module ticketland::event {
     n_tickets: u32,
     start_time: u64,
     end_time: u64,
+    resale_cap_bps: u16,
+    royalty_bps: u16,
     ctx: &mut TxContext
   ): address {
     // the event id
@@ -267,6 +276,8 @@ module ticketland::event {
       n_tickets,
       start_time,
       end_time,
+      resale_cap_bps,
+      royalty_bps,
       event_capacity: create_event_capacity(),
       ticket_types: vector[],
     };
