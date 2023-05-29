@@ -23,7 +23,6 @@ module ticketland::attendance {
     attendace: VecMap<address, bool>,
   }
 
-
   // Events
   struct SetAttended has copy, drop {
     cnt_id: address,

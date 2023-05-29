@@ -225,7 +225,7 @@ module ticketland::ticket {
     assert!(len == vector::length(&property_values), E_PROPERTY_VEC_MISMATCH);
 
     let event_id = get_event_organizer_cap_event_id(cap);
-    let properties = vec_map::empty<String, String>();
+    let properties = vec_map::empty();
     let i = 0;
 
     while (i < len) {

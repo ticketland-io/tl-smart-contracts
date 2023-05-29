@@ -270,6 +270,8 @@ module ticketland::event {
     name: String,
     description: String,
     image_uri: String,
+    property_keys: vector<String>,
+    property_values: vector<String>,
     n_tickets: u32,
     start_time: u64,
     end_time: u64,
@@ -277,9 +279,19 @@ module ticketland::event {
     royalty_bps: u16,
     ctx: &mut TxContext
   ): address {
-    // the event id
     let id = object::new(ctx);
     let nft_event_id = object::new(ctx);
+    let len = vector::length(&property_keys);
+    let properties = vec_map::empty();
+    let i = 0;
+
+    while (i < len) {
+      let key = vector::pop_back(&mut property_keys);
+      let val = vector::pop_back(&mut property_values);
+      
+      vec_map::insert(&mut properties, key, val);
+      i = i + 1;
+    };
 
     let nft_event = NftEvent {
       id: nft_event_id,
@@ -290,7 +302,7 @@ module ticketland::event {
       // We add this to make it future proof. We might want to add additional custom metadata
       // attributes to each event NFT in the future. So to make module upgrades compatible, we
       // want to have this field in the struct
-      properties: vec_map::empty(),
+      properties,
     };
 
     let creator = sender(ctx);

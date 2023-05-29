@@ -10,6 +10,9 @@ module ticketland::event_registry {
   use ticketland::attendance::{create_op_cap};
   use ticketland::event as tl_event;
 
+  /// Errors
+  const E_PROPERTY_VEC_MISMATCH: u64 = 0;
+
   /// Capability allowing the bearer to execute admin related tasks
   struct AdminCap has key {id: UID}
 
@@ -97,6 +100,8 @@ module ticketland::event_registry {
     name: String,
     description: String,
     image_uri: String,
+    property_keys: vector<String>,
+    property_values: vector<String>,
     n_tickets: u32,
     start_time: u64,
     end_time: u64,
@@ -105,11 +110,15 @@ module ticketland::event_registry {
     config: &Config,
     ctx: &mut TxContext
   ) {
+    assert!(vector::length(&property_keys) == vector::length(&property_values), E_PROPERTY_VEC_MISMATCH);
+
     let event_id = tl_event::create_event(
       e_id,
       name,
       description,
       image_uri,
+      property_keys,
+      property_values,
       n_tickets,
       start_time,
       end_time,
