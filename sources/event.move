@@ -38,8 +38,6 @@ module ticketland::event {
 
   struct NftEvent has key {
     id: UID,
-    /// The off-chain event id
-    e_id: String,
     /// The name of the NFT
     name: String,
     /// The description
@@ -53,8 +51,6 @@ module ticketland::event {
   // THe shared event object
   struct Event has key {
     id: UID,
-    /// The off-chain event id
-    e_id: String, 
     /// The id of the NftEvent associated with this event
     event_nft_id: address,
     /// The event creator
@@ -128,7 +124,6 @@ module ticketland::event {
     let creator = sender(ctx);
 
     let event_nft_keys = vector[
-      utf8(b"Event id"),
       utf8(b"Name"),
       utf8(b"Description"),
       utf8(b"Image Uri"),
@@ -139,11 +134,10 @@ module ticketland::event {
     ];
 
     let event_nft_values = vector[
-      utf8(b"{e_id}"),
       utf8(b"{name}"),
       utf8(b"{description}"),
       utf8(b"{image_uri}"),
-      utf8(b"https://app.ticketland/events/{e_id}"),
+      utf8(b"https://app.ticketland/events/{id}"),
       address::to_string(creator),
       utf8(b"{resale_cap_bps}"),
       utf8(b"{royalty_bps}"),
@@ -186,10 +180,6 @@ module ticketland::event {
 
   public fun get_event_creator(event: &Event): address {
     event.creator
-  }
-
-  public fun get_offchain_event_id(event: &Event): String {
-    event.e_id
   }
 
   public fun get_available_seats(event: &Event): u32 {
@@ -258,7 +248,6 @@ module ticketland::event {
   /// 
   /// # Arguments
   /// 
-  /// * `e_id` - The off-chain event id
   /// * `name` - The event name
   /// * `description` - The event description
   /// * `image_uri` - The event image uri
@@ -266,7 +255,6 @@ module ticketland::event {
   /// * `start_time` - The event start time
   /// * `end_time` - The event end time
   public(friend) fun create_event(
-    e_id: String,
     name: String,
     description: String,
     image_uri: String,
@@ -295,7 +283,6 @@ module ticketland::event {
 
     let nft_event = NftEvent {
       id: nft_event_id,
-      e_id,
       name,
       description,
       image_uri,
@@ -308,7 +295,6 @@ module ticketland::event {
     let creator = sender(ctx);
     let event = Event {
       id,
-      e_id,
       event_nft_id: uid_to_address(&nft_event.id),
       creator, 
       n_tickets,

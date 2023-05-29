@@ -74,8 +74,6 @@ module ticketland::ticket {
     event_id: address,
     /// The CNT ticket type id (as address)
     ticket_type_id: address,
-    /// The off-chain event id
-    e_id: String,
     /// The name of the CNT
     name: String,
     /// Information about the payment in the primary market when this CNT was created
@@ -99,7 +97,6 @@ module ticketland::ticket {
 
   fun init(otw: TICKET, ctx: &mut TxContext) {
     let ticket_keys = vector[
-      utf8(b"Event id"),
       utf8(b"Name"),
       utf8(b"Link"),
       utf8(b"Price"),
@@ -109,8 +106,7 @@ module ticketland::ticket {
 
     let ticket_values = vector[
       utf8(b"{name}"),
-      utf8(b"{e_id}"),
-      utf8(b"https://app.ticketland/events/{e_id}"),
+      utf8(b"https://app.ticketland/events/{id}"),
       utf8(b"{paid}"),
       utf8(b"{seat_index}"),
       utf8(b"{seat_name}"),
@@ -250,7 +246,6 @@ module ticketland::ticket {
   public(friend) fun mint_cnt(
     event_id: address,
     ticket_type_id: address,
-    e_id: String,
     name: String,
     seat_index: String,
     seat_name: String,
@@ -265,7 +260,6 @@ module ticketland::ticket {
       id,
       event_id,
       ticket_type_id,
-      e_id,
       name,
       seat_index,
       seat_name,

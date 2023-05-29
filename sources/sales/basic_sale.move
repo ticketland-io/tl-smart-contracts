@@ -17,7 +17,7 @@ module ticketland::basic_sale {
     FixedPrice, Refundable, get_fixed_price_amount, get_refundable_price_amount
   };
   use ticketland::event::{
-    Event, get_ticket_type, get_event_id, get_offchain_event_id, get_ticket_type_id, get_sale_type,
+    Event, get_ticket_type, get_event_id, get_ticket_type_id, get_sale_type,
   };
 
   friend ticketland::primary_market;
@@ -51,7 +51,6 @@ module ticketland::basic_sale {
     ticket::mint_cnt(
       get_event_id(event),
       get_ticket_type_id(ticket_type),
-      get_offchain_event_id(event),
       ticket_name,
       u64_to_str(seat_index),
       seat_name,
@@ -83,7 +82,6 @@ module ticketland::basic_sale {
     let cnt_id = ticket::mint_cnt(
       get_event_id(event),
       get_ticket_type_id(ticket_type),
-      get_offchain_event_id(event),
       ticket_name,
       u64_to_str(seat_index),
       seat_name,
@@ -115,7 +113,6 @@ module ticketland::basic_sale {
     let cnt_id = ticket::mint_cnt(
       get_event_id(event),
       get_ticket_type_id(ticket_type),
-      get_offchain_event_id(event),
       ticket_name,
       u64_to_str(seat_index),
       seat_name,

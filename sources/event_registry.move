@@ -86,7 +86,6 @@ module ticketland::event_registry {
   /// 
   /// # Arguments
   /// 
-  /// * `e_id` - The off-chain event id
   /// * `name` - The event name
   /// * `description` - The event description
   /// * `image_uri` - The event image uri
@@ -96,7 +95,6 @@ module ticketland::event_registry {
   /// * `resale_cap_bps` - The max increase from previous price a ticket can be sold for. This is 10_000 basis point
   /// * `royalty_bps` - The resale fee basis points i.e. royalty fees
   public(friend) entry fun create_event(
-    e_id: String,
     name: String,
     description: String,
     image_uri: String,
@@ -113,7 +111,6 @@ module ticketland::event_registry {
     assert!(vector::length(&property_keys) == vector::length(&property_values), E_PROPERTY_VEC_MISMATCH);
 
     let event_id = tl_event::create_event(
-      e_id,
       name,
       description,
       image_uri,
