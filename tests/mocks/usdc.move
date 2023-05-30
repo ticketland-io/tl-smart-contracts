@@ -4,7 +4,7 @@ module ticketland::usdc {
   use std::option;
   use sui::coin;
   use sui::transfer;
-  use sui::tx_context::{Self, TxContext, sender};
+  use sui::tx_context::{TxContext, sender};
 
   struct USDC has drop {}
 
