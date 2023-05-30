@@ -1,7 +1,7 @@
 #[test_only]
 module ticketland::event_test {
   use std::string::{utf8};
-  use ticketland::merkle_tree_test::{create_tree, root, get_proof};
+  use ticketland::merkle_tree_test::{create_tree, root};
   use sui::test_scenario::{
     Self, Scenario, ctx, next_tx, end, take_from_sender, return_to_sender, 
     take_shared, return_shared,
@@ -9,7 +9,7 @@ module ticketland::event_test {
   use ticketland::event::{
     EventOrganizerCap, Event, NftEvent, create_event, test_init, add_ticket_types,
     get_ticket_type, get_event_creator, get_available_seats,get_resale_cap_bps, get_royalty_bps,
-    get_ticket_type_mt_root, has_ticket_type, get_ticket_type_id, get_seat_range,
+    get_ticket_type_mt_root, has_ticket_type, get_ticket_type_id, get_seat_range, get_ticket_type_sale_time,
   };
 
   fun create_new_event(scenario: &mut Scenario, admin: address) {
@@ -83,14 +83,25 @@ module ticketland::event_test {
       ctx(&mut scenario),
     );
 
+    // ticket type 1
     let ticket_type = get_ticket_type(&event, 0);
     let (l, r) = get_seat_range(ticket_type);
+    let (start, end) = get_ticket_type_sale_time(ticket_type);
     assert!(l == 0 && r == 59, 1);
     assert!(*get_ticket_type_mt_root(ticket_type) == root_1, 1);
     assert!(has_ticket_type(&event, &get_ticket_type_id(ticket_type)), 1);
-    
-    std::debug::print(&get_proof(&mut tree, 25));
+    assert!(start == 0 && end == 10, 1);
 
+    // ticket type 2
+    let ticket_type = get_ticket_type(&event, 1);
+    let (l, r) = get_seat_range(ticket_type);
+    let (start, end) = get_ticket_type_sale_time(ticket_type);
+    assert!(l == 60 && r == 99, 1);
+    assert!(*get_ticket_type_mt_root(ticket_type) == root_2, 1);
+    assert!(has_ticket_type(&event, &get_ticket_type_id(ticket_type)), 1);
+    assert!(start == 0 && end == 10, 1);
+
+    
     return_to_sender(&mut scenario, organizer_cap);
     return_shared(event);
     end(scenario);
