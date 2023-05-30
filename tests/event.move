@@ -68,7 +68,9 @@ module ticketland::event_test {
     let organizer_cap = take_from_sender<EventOrganizerCap>(&mut scenario);
     let event = take_shared<Event>(&mut scenario);
     let root_1 = *root(&create_tree(100, 0, 59));
+    std::debug::print(&root_1);
     let root_2 = *root(&create_tree(100, 60, 99));
+    std::debug::print(&root_2);
 
     add_ticket_types(
       vector[utf8(b"type1"), utf8(b"type2")],

@@ -8,7 +8,7 @@ module ticketland::price_oracle {
   use std::ascii;
 
   // Constants
-  const SMALLER: u8 = 2;
+  const SMALLER: u8 = 1;
 
   /// Errors
   const E_LEN_MISMATCH: u64 = 0;

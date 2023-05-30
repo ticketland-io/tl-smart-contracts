@@ -7,8 +7,9 @@ module ticketland::merkle_tree_test {
   use ticketland::collection_utils::{compare_vector};
 
   /// Constants
-  const EQUAL: u8 = 2;
-  const SMALLER: u8 = 2;
+  const EQUAL: u8 = 0;
+  const SMALLER: u8 = 1;
+  const EMPTY: vector<u8> = b"";
 
   struct Tree has drop {
     leaves: vector<vector<u8>>,
@@ -29,6 +30,27 @@ module ticketland::merkle_tree_test {
     &tree.root
   }
 
+  fun one_level_up(layer: &mut vector<vector<u8>>): vector<vector<u8>> {
+    let len = vector::length(layer);
+    // if odd then add one more value to make the number event
+    if(len % 2 == 1) {
+      vector::push_back(layer, EMPTY);
+    };
+
+    let result = vector[];
+    let i = 0;
+
+    while(i < len) {
+      let left = *vector::borrow(layer, i);
+      let right = *vector::borrow(layer, i + 1);
+
+      vector::push_back(&mut result, hash_pair(left, right));
+      i = i + 2;
+    };
+
+    result
+  }
+
   public fun create(leaves: vector<vector<u8>>): Tree {
     let i = 0;
     let origal_leaves = vector[];
@@ -41,26 +63,8 @@ module ticketland::merkle_tree_test {
        i = i + 1;
     };
 
-    let i = 0;
     while (vector::length(&leaves) > 1) {
-      // reset if last item reached
-      if(i == vector::length(&leaves) - 1 || i == vector::length(&leaves)) {
-        i = 0;
-      };
-
-      let left = vector::remove(&mut leaves, i);
-      let right = *vector::borrow(&leaves, i);
-
-      // This is how we update the value of vector at a given index
-      // 1. Add the new value to the end of the vector
-      // 2. Swap it with the index we want to update
-      // 3. Delete the last time which will be the old value
-      let last_item_index = vector::length(&leaves);
-      vector::push_back(&mut leaves, hash_pair(left, right));
-      vector::swap(&mut leaves, i, last_item_index);
-      vector::pop_back(&mut leaves);
-
-      i = i + 1;
+      leaves = one_level_up(&mut leaves);
     };
 
     Tree {

@@ -5,8 +5,8 @@ module ticketland::collection_utils {
   
   /// Constants
   const EQUAL: u8 = 0;
-  const BIGGER: u8 = 1;
-  const SMALLER: u8 = 2;
+  const SMALLER: u8 = 1;
+  const BIGGER: u8 = 2;
 
   /// Errors
   const E_LENGTH_INVALID: u64 = 1;

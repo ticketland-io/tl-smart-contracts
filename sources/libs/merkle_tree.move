@@ -4,8 +4,8 @@ module ticketland::merkle_tree {
   use ticketland::collection_utils::{compare_vector};
 
   /// Constants
-  const EQUAL: u8 = 2;
-  const SMALLER: u8 = 2;
+  const EQUAL: u8 = 0;
+  const SMALLER: u8 = 1;
 
   /// Errors
   const E_VERIFICATION_FAILED: u64 = 0;
