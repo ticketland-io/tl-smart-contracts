@@ -2,8 +2,8 @@ module ticketland::attendance {
   use sui::tx_context::{TxContext};
   use sui::object::{Self, UID};
   use sui::transfer::{share_object};
-  use sui::vec_map::{Self, VecMap};
   use sui::event::{emit};
+  use sui::table::{Self, Table};
   use ticketland::ticket::{Self, CNT, get_cnt_id, get_cnt_event_id};
 
   friend ticketland::event_registry;
@@ -20,7 +20,7 @@ module ticketland::attendance {
   struct Config has key {
     id: UID,
     /// cnt id (as address) => attended the event?
-    attendace: VecMap<address, bool>,
+    attendace: Table<address, bool>,
   }
 
   // Events
@@ -35,14 +35,14 @@ module ticketland::attendance {
   fun init(ctx: &mut TxContext) {
     let attendance = Config {
       id: object::new(ctx),
-      attendace: vec_map::empty(),
+      attendace: table::new(ctx),
     };
 
     share_object(attendance);
   }
 
   public fun has_attended(cnt_id: address, config: &Config): bool {
-    *vec_map::get(&config.attendace, &cnt_id)
+    *table::borrow(&config.attendace, cnt_id)
   }
 
   /// A function that is called by the event organizer and transfers a new operator cap to the given address
@@ -65,7 +65,7 @@ module ticketland::attendance {
     assert!(get_cnt_event_id(cnt) == cap.event_id, E_UNAUTHORIZED);
     
     let cnt_id = get_cnt_id(cnt);
-    vec_map::insert(&mut config.attendace, cnt_id, true);
+    table::add(&mut config.attendace, cnt_id, true);
 
     emit(SetAttended {cnt_id});
   }

@@ -237,10 +237,10 @@ module ticketland::event {
     event.royalty_bps
   }
 
-  fun create_event_capacity(): EventCapacity {
+  fun create_event_capacity(ctx: &mut TxContext): EventCapacity {
     EventCapacity {
       tickets_sold: 0,
-      seats: bitmap::empty(),
+      seats: bitmap::empty(ctx),
     }
   }
 
@@ -302,7 +302,7 @@ module ticketland::event {
       end_time,
       resale_cap_bps,
       royalty_bps,
-      event_capacity: create_event_capacity(),
+      event_capacity: create_event_capacity(ctx),
       ticket_types: vector[],
     };
 
