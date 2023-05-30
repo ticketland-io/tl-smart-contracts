@@ -30,8 +30,8 @@ module ticketland::event_test {
       vector[utf8(b"key1"), utf8(b"key2")],
       vector[utf8(b"value1"), utf8(b"value1")],
       1000,
-      1685441840,
-      1685442840,
+      100, // start ts
+      200, // end ts
       1000,
       100,
       ctx(scenario),
@@ -204,6 +204,36 @@ module ticketland::event_test {
     // check that sale types were added. It will abort if sale types cannot be found
     get_sale_type<Free>(&event, 0);
     get_sale_type<FixedPrice<USDC>>(&event, 1);
+
+    return_shared(event);
+    clock::destroy_for_testing(clock);
+    end(scenario);
+  }
+
+  #[test(admin=@0xab, protocol_fee_address=@0xbc, operator1=@0xcd, operator2=@0xde)]
+  #[expected_failure(abort_code = 0x4, location = ticketland::event)]
+  fun test_add_sale_type_fails_when_wrong_time(
+    admin: address,
+    protocol_fee_address: address,
+    operator1: address,
+    operator2: address,
+  ) {
+    let scenario = test_scenario::begin(admin);
+    setup(&mut scenario, admin);
+
+    let event = take_shared<Event>(&mut scenario);
+    let clock = clock::create_for_testing(ctx(&mut scenario));
+    clock::set_for_testing(&mut clock, 101);
+
+    setup_ticket_types(
+      &mut scenario,
+      &mut clock,
+      &mut event,
+      admin,
+      protocol_fee_address,
+      operator1,
+      operator2,
+    );
 
     return_shared(event);
     clock::destroy_for_testing(clock);

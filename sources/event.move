@@ -29,6 +29,7 @@ module ticketland::event {
   const E_MT_ROOT: u64 = 1;
   const E_TICKET_TYPE_SET: u64 = 2;
   const E_SALE_TYPE_SET: u64 = 3;
+  const E_EVENT_STARTED: u64 = 4;
 
   /// One-Time-Witness for the module.
   struct EVENT has drop {}
@@ -384,7 +385,7 @@ module ticketland::event {
 
   // We're not allowed to change the ticket type once it's set
   fun assert_add_sale_type(start_time: u64, ticket_type: &TicketType, clock: &Clock) {
-    assert!(clock::timestamp_ms(clock) < start_time, E_SALE_TYPE_SET);
+    assert!(clock::timestamp_ms(clock) < start_time, E_EVENT_STARTED);
     assert!(!dfield::exists_(&ticket_type.id, SALE_TYPE_KEY), E_SALE_TYPE_SET);
   }
 
