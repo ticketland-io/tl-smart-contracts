@@ -63,6 +63,10 @@ module ticketland::merkle_tree_test {
        i = i + 1;
     };
 
+    if(vector::length(&origal_leaves) % 2 == 1) {
+      vector::push_back(&mut origal_leaves, EMPTY);
+    };
+
     while (vector::length(&leaves) > 1) {
       leaves = one_level_up(&mut leaves);
     };
@@ -71,6 +75,25 @@ module ticketland::merkle_tree_test {
       leaves: origal_leaves,
       root: vector::remove(&mut leaves, 0),
     }
+  }
+
+  public fun get_proof(tree: &Tree, index: u64): vector<vector<u8>> {
+    let result = vector[];
+    let current_layer = tree.leaves;
+
+    while (vector::length(&current_layer) > 1) {
+      if(index % 2 == 0) {
+        vector::push_back(&mut result, *vector::borrow(&current_layer, index + 1));
+      } else {
+        vector::push_back(&mut result, *vector::borrow(&current_layer, index - 1));
+      };
+
+      // move to the next layer up
+      index = index / 2;
+      current_layer = one_level_up(&mut current_layer);
+    };
+
+    result
   }
 
   /// Create a sparse merkle tree

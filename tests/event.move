@@ -1,7 +1,7 @@
 #[test_only]
 module ticketland::event_test {
   use std::string::{utf8};
-  use ticketland::merkle_tree_test::{create_tree, root};
+  use ticketland::merkle_tree_test::{create_tree, root, get_proof};
   use sui::test_scenario::{
     Self, Scenario, ctx, next_tx, end, take_from_sender, return_to_sender, 
     take_shared, return_shared,
@@ -67,10 +67,9 @@ module ticketland::event_test {
 
     let organizer_cap = take_from_sender<EventOrganizerCap>(&mut scenario);
     let event = take_shared<Event>(&mut scenario);
-    let root_1 = *root(&create_tree(100, 0, 59));
-    std::debug::print(&root_1);
+    let tree = create_tree(100, 0, 59);
+    let root_1 = *root(&tree);
     let root_2 = *root(&create_tree(100, 60, 99));
-    std::debug::print(&root_2);
 
     add_ticket_types(
       vector[utf8(b"type1"), utf8(b"type2")],
@@ -90,6 +89,7 @@ module ticketland::event_test {
     assert!(*get_ticket_type_mt_root(ticket_type) == root_1, 1);
     assert!(has_ticket_type(&event, &get_ticket_type_id(ticket_type)), 1);
     
+    std::debug::print(&get_proof(&mut tree, 25));
 
     return_to_sender(&mut scenario, organizer_cap);
     return_shared(event);
