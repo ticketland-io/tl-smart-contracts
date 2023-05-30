@@ -4,7 +4,8 @@ module ticketland::bitmap {
 
   struct Bitmap has store {
     /// We can't use vector since it's not a fixed size array. That means that reading an index that does not have a value
-    /// will abort. In addition, we can't just insert at random indexes in vector; it has to be sequential.
+    /// will abort. In addition, we can't just insert at random indexes in vector; it has to be sequential. Table is preferred
+    /// over VecMap because bitmap can store thousands of entries and VecMap being O(n) data structure prohibits such use case.
     inner: Table<u64, u8>,
   }
 
