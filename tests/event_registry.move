@@ -8,7 +8,7 @@ module ticketland::event_registry_test {
     take_shared, return_shared,
   };
   use ticketland::usdc::{USDC, Self};
-  use ticketland::event::{Event, NftEvent};
+  use ticketland::event::{Event, NftEvent, EventOrganizerCap};
   use ticketland::event_registry::{
     Self, Config, AdminCap, update_config, get_protocol_info, is_coin_supported,
     create_event,
@@ -106,9 +106,13 @@ module ticketland::event_registry_test {
     let event = take_shared<Event>(&mut scenario);
     return_shared(event);
 
-    // A new owned NftEvent is 
+    // A new owned NftEvent is created
     let nft_event = take_from_sender<NftEvent>(&mut scenario);
     return_to_sender(&mut scenario, nft_event);
+
+    // A new owned EventOrganizer is  create
+    let cap = take_from_sender<EventOrganizerCap>(&mut scenario);
+    return_to_sender(&mut scenario, cap);
 
     return_shared(config);
     end(scenario);

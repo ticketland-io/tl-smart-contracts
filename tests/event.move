@@ -5,7 +5,9 @@ module ticketland::event_test {
     Self, Scenario, ctx, next_tx, end, take_from_sender, return_to_sender, 
     take_shared, return_shared,
   };
-  use ticketland::event::{Event, NftEvent, create_event, test_init};
+  use ticketland::event::{
+    EventOrganizerCap, Event, NftEvent, create_event, test_init
+  };
 
   fun create_new_event(scenario: &mut Scenario, admin: address) {
     create_event(
@@ -42,6 +44,10 @@ module ticketland::event_test {
     // A new owned NftEvent is 
     let nft_event = take_from_sender<NftEvent>(&mut scenario);
     return_to_sender(&mut scenario, nft_event);
+
+    // A new owned EventOrganizer is  create
+    let cap = take_from_sender<EventOrganizerCap>(&mut scenario);
+    return_to_sender(&mut scenario, cap);
 
     end(scenario);
   }
