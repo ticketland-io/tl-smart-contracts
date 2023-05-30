@@ -202,14 +202,14 @@ module ticketland::event {
   }
 
   /// Checks if the tiven ticket type is indeed part of the given event
-  public fun has_ticket_type(event: &Event, ticket_type_id: address): bool {
+  public fun has_ticket_type(event: &Event, ticket_type_id: &address): bool {
     let len = vector::length(&event.ticket_types);
     let i = 0;
 
     while(i < len) {
       let ticket_type = vector::borrow(&event.ticket_types, i);
 
-      if(uid_to_address(&ticket_type.id) == ticket_type_id) {
+      if(&uid_to_address(&ticket_type.id) == ticket_type_id) {
         return true
       };
 

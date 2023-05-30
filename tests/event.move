@@ -7,7 +7,9 @@ module ticketland::event_test {
     take_shared, return_shared,
   };
   use ticketland::event::{
-    Self, EventOrganizerCap, Event, NftEvent, create_event, test_init, add_ticket_types
+    EventOrganizerCap, Event, NftEvent, create_event, test_init, add_ticket_types,
+    get_ticket_type, get_event_creator, get_available_seats,get_resale_cap_bps, get_royalty_bps,
+    get_ticket_type_mt_root, has_ticket_type, get_ticket_type_id, get_seat_range,
   };
 
   fun create_new_event(scenario: &mut Scenario, admin: address) {
@@ -40,10 +42,10 @@ module ticketland::event_test {
   
     // A new shared Event is created
     let event = take_shared<Event>(&mut scenario);
-    assert!(event::get_event_creator(&event) == admin, 1);
-    assert!(event::get_available_seats(&event) == 1000, 1);
-    assert!(event::get_resale_cap_bps(&event) == 1000, 1);
-    assert!(event::get_royalty_bps(&event) == 100, 1);
+    assert!(get_event_creator(&event) == admin, 1);
+    assert!(get_available_seats(&event) == 1000, 1);
+    assert!(get_resale_cap_bps(&event) == 1000, 1);
+    assert!(get_royalty_bps(&event) == 100, 1);
     return_shared(event);
 
 
@@ -65,12 +67,12 @@ module ticketland::event_test {
 
     let organizer_cap = take_from_sender<EventOrganizerCap>(&mut scenario);
     let event = take_shared<Event>(&mut scenario);
-    let root1 = *root(&create_tree(100, 0, 59));
-    let root2 = *root(&create_tree(100, 60, 99));
+    let root_1 = *root(&create_tree(100, 0, 59));
+    let root_2 = *root(&create_tree(100, 60, 99));
 
     add_ticket_types(
       vector[utf8(b"type1"), utf8(b"type2")],
-      vector[root1, root2],
+      vector[root_1, root_2],
       vector[60, 40],
       vector[0, 0],
       vector[10, 10],
@@ -79,6 +81,13 @@ module ticketland::event_test {
       &organizer_cap,
       ctx(&mut scenario),
     );
+
+    let ticket_type = get_ticket_type(&event, 0);
+    let (l, r) = get_seat_range(ticket_type);
+    assert!(l == 0 && r == 59, 1);
+    assert!(*get_ticket_type_mt_root(ticket_type) == root_1, 1);
+    assert!(has_ticket_type(&event, &get_ticket_type_id(ticket_type)), 1);
+    
 
     return_to_sender(&mut scenario, organizer_cap);
     return_shared(event);

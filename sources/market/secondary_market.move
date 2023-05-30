@@ -139,7 +139,7 @@ module ticketland::secondary_market {
     price: Coin<T>,
     ctx: &mut TxContext,
   ) {
-    assert!(has_ticket_type(event, ticket_type_id), E_WRONG_TICKET_TYPE);
+    assert!(has_ticket_type(event, &ticket_type_id), E_WRONG_TICKET_TYPE);
 
     let buyer = sender(ctx);
     let offer = Offer<T> {
