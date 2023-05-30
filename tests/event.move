@@ -6,7 +6,7 @@ module ticketland::event_test {
     take_shared, return_shared,
   };
   use ticketland::event::{
-    EventOrganizerCap, Event, NftEvent, create_event, test_init,
+    EventOrganizerCap, Event, NftEvent, create_event, test_init, add_ticket_types
   };
 
   fun create_new_event(scenario: &mut Scenario, admin: address) {
