@@ -94,7 +94,7 @@ module ticketland::event_registry {
   /// * `end_time` - The event end time
   /// * `resale_cap_bps` - The max increase from previous price a ticket can be sold for. This is 10_000 basis point
   /// * `royalty_bps` - The resale fee basis points i.e. royalty fees
-  public(friend) entry fun create_event(
+  public entry fun create_event(
     name: String,
     description: String,
     image_uri: String,
