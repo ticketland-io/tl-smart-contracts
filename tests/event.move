@@ -2,6 +2,9 @@
 module ticketland::event_test {
   use std::string::{utf8};
   use ticketland::merkle_tree_test::{create_tree, root};
+  use sui::clock;
+  use std::type_name;
+  use sui::sui::SUI;
   use sui::test_scenario::{
     Self, Scenario, ctx, next_tx, end, take_from_sender, return_to_sender, 
     take_shared, return_shared,
@@ -10,6 +13,13 @@ module ticketland::event_test {
     EventOrganizerCap, Event, NftEvent, create_event, test_init, add_ticket_types,
     get_ticket_type, get_event_creator, get_available_seats,get_resale_cap_bps, get_royalty_bps,
     get_ticket_type_mt_root, has_ticket_type, get_ticket_type_id, get_seat_range, get_ticket_type_sale_time,
+    get_sale_type,
+  };
+  use ticketland::usdc::{USDC};
+  use ticketland::event_registry::{create_config, drop_config};
+  use ticketland::common_test::to_base;
+  use ticketland::sale_type::{
+    Free, FixedPrice, add_free_sale_type, add_fixed_price_sale_type,
   };
 
   fun create_new_event(scenario: &mut Scenario, admin: address) {
@@ -101,9 +111,81 @@ module ticketland::event_test {
     assert!(has_ticket_type(&event, &get_ticket_type_id(ticket_type)), 1);
     assert!(start == 0 && end == 10, 1);
 
-    
     return_to_sender(&mut scenario, organizer_cap);
     return_shared(event);
+    end(scenario);
+  }
+
+  #[test(admin=@0xab, protocol_fee_address=@0xbc, operator1=@0xcd, operator2=@0xde)]
+  fun test_add_sale_type(
+    admin: address,
+    protocol_fee_address: address,
+    operator1: address,
+    operator2: address,
+  ) {
+    let scenario = test_scenario::begin(admin);
+    setup(&mut scenario, admin);
+
+    let organizer_cap = take_from_sender<EventOrganizerCap>(&mut scenario);
+    let event = take_shared<Event>(&mut scenario);
+    let tree = create_tree(100, 0, 59);
+    let root_1 = *root(&tree);
+    let root_2 = *root(&create_tree(100, 60, 99));
+
+    add_ticket_types(
+      vector[utf8(b"type1"), utf8(b"type2")],
+      vector[root_1, root_2],
+      vector[60, 40],
+      vector[10, 10],
+      vector[20, 20],
+      vector[vector[0, 59], vector[60, 99]],
+      &mut event,
+      &organizer_cap,
+      ctx(&mut scenario),
+    );
+    
+    let clock = clock::create_for_testing(ctx(&mut scenario));
+
+    // create a dummy config
+    let config = create_config(
+      vector[
+        type_name::into_string(type_name::get<USDC>()),
+        type_name::into_string(type_name::get<SUI>()),
+      ],
+      1000,
+      protocol_fee_address,
+      vector[operator1, operator2],
+      ctx(&mut scenario),
+    );
+    
+    // add free sale type to the first ticket type
+    add_free_sale_type(
+      &mut event,
+      0,
+      &clock,
+      &organizer_cap,
+    );
+
+    // add fixed price sale type to the first ticket type
+    add_fixed_price_sale_type<USDC>(
+      &mut event,
+      1,
+      to_base(100),
+      &config,
+      &clock,
+      &organizer_cap,
+    );
+    
+    next_tx(&mut scenario, admin);
+
+    // check that sale types were added. It will abort if sale types cannot be found
+    get_sale_type<Free>(&event, 0);
+    get_sale_type<FixedPrice<USDC>>(&event, 1);
+
+    return_to_sender(&mut scenario, organizer_cap);
+    return_shared(event);
+    drop_config(config);
+    clock::destroy_for_testing(clock);
     end(scenario);
   }
 }

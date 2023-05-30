@@ -147,4 +147,43 @@ module ticketland::event_registry {
   public fun test_init(ctx: &mut TxContext) {
     init(ctx)
   }
+
+  #[test_only]
+  public fun create_config(
+    supported_coins: vector<ascii::String>,
+    protocol_fee: u64,
+    protocol_fee_address: address,
+    operators: vector<address>,
+    ctx: &mut TxContext
+  ): Config {
+    let config = Config {
+      id: object::new(ctx), 
+      supported_coins: vec_map::empty(),
+      protocol_fee: 0,
+      protocol_fee_address: sender(ctx),
+      operators: vector[],
+    };
+
+    let admin_cap = AdminCap {id: object::new(ctx)};
+
+    update_config(
+      &admin_cap,
+      &mut config,
+      supported_coins,
+      protocol_fee,
+      protocol_fee_address,
+      operators,
+    );
+
+    let AdminCap {id} = admin_cap;
+    object::delete(id);
+
+    config
+  }
+
+  #[test_only]
+  public fun drop_config(config: Config) {
+    let Config {id, supported_coins: _, protocol_fee: _, protocol_fee_address: _, operators: _} = config;
+    object::delete(id);
+  }
 }
