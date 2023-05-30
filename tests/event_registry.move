@@ -19,6 +19,7 @@ module ticketland::event_registry_test {
   }
 
   fun setup(scenario: &mut Scenario, admin: address) {
+    init_currencies(scenario);
     event_registry::test_init(ctx(scenario));
     next_tx(scenario, admin);
   }
@@ -58,7 +59,6 @@ module ticketland::event_registry_test {
     operator2: address,
   ) {
     let scenario = test_scenario::begin(admin);
-    init_currencies(&mut scenario);
     setup(&mut scenario, admin);
     setup_config(&mut scenario, admin, protocol_fee_address, operator1, operator2);
 
@@ -82,7 +82,6 @@ module ticketland::event_registry_test {
     operator2: address,
   ) {
     let scenario = test_scenario::begin(admin);
-    init_currencies(&mut scenario);
     setup(&mut scenario, admin);
     setup_config(&mut scenario, admin, protocol_fee_address, operator1, operator2);
     let config = take_shared<Config>(&mut scenario);

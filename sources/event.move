@@ -12,6 +12,9 @@ module ticketland::event {
   use std::vector;
   use sui::vec_map::{Self, VecMap};
   use ticketland::bitmap::{Self, Bitmap};
+  
+  #[test_only]
+  friend ticketland::event_test;
 
   friend ticketland::event_registry;
   friend ticketland::sale_type;
@@ -414,5 +417,10 @@ module ticketland::event {
 
   public(friend) fun update_seats(event: &mut Event, seat_index: u64) {
     bitmap::flip_bit(&mut event.event_capacity.seats, seat_index);
+  }
+
+  #[test_only]
+  public fun test_init(ctx: &mut TxContext) {
+    init(EVENT {}, ctx)
   }
 }
