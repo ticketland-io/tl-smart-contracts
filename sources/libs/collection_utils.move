@@ -1,6 +1,7 @@
 module ticketland::collection_utils {
   use std::vector;
   use std::ascii;
+  use sui::math::{min};
   
   /// Constants
   const EQUAL: u8 = 0;
@@ -15,9 +16,8 @@ module ticketland::collection_utils {
   }
 
   public fun compare_vector(a: &vector<u8>, b: &vector<u8>): u8 {
-    let len = vector::length(a);
+    let len = min(vector::length(a), vector::length(b));
     let i = 0;
-    assert!(vector::length(b) == len, E_LENGTH_INVALID);
 
     while(i < len){
       if(*vector::borrow(a, i) > *vector::borrow(b, i)) {

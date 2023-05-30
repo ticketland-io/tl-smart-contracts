@@ -10,7 +10,7 @@ module ticketland::merkle_tree_test {
   const EQUAL: u8 = 2;
   const SMALLER: u8 = 2;
 
-  struct Tree {
+  struct Tree has drop {
     leaves: vector<vector<u8>>,
     root: vector<u8>,
   }
@@ -25,7 +25,7 @@ module ticketland::merkle_tree_test {
     }
   }
 
-  fun root(tree: &Tree): &vector<u8> {
+  public fun root(tree: &Tree): &vector<u8> {
     &tree.root
   }
 
@@ -44,12 +44,12 @@ module ticketland::merkle_tree_test {
     let i = 0;
     while (vector::length(&leaves) > 1) {
       // reset if last item reached
-      if(i == vector::length(&leaves) - 1) {
+      if(i == vector::length(&leaves) - 1 || i == vector::length(&leaves)) {
         i = 0;
       };
 
       let left = vector::remove(&mut leaves, i);
-      let right = *vector::borrow(&leaves, i + 1);
+      let right = *vector::borrow(&leaves, i);
 
       // This is how we update the value of vector at a given index
       // 1. Add the new value to the end of the vector
@@ -91,7 +91,9 @@ module ticketland::merkle_tree_test {
         vector::push_back(&mut leaves, *bytes(&seat_index));
       } else {
         vector::push_back(&mut leaves, b"NULL");
-      }
+      };
+
+      i = i + 1;
     };
 
     create(leaves)

@@ -1,12 +1,13 @@
 #[test_only]
 module ticketland::event_test {
   use std::string::{utf8};
+  use ticketland::merkle_tree_test::{create_tree, root};
   use sui::test_scenario::{
     Self, Scenario, ctx, next_tx, end, take_from_sender, return_to_sender, 
     take_shared, return_shared,
   };
   use ticketland::event::{
-    EventOrganizerCap, Event, NftEvent, create_event, test_init, add_ticket_types
+    Self, EventOrganizerCap, Event, NftEvent, create_event, test_init, add_ticket_types
   };
 
   fun create_new_event(scenario: &mut Scenario, admin: address) {
@@ -16,7 +17,7 @@ module ticketland::event_test {
       utf8(b"https://app.ticketland.io/1"),
       vector[utf8(b"key1"), utf8(b"key2")],
       vector[utf8(b"value1"), utf8(b"value1")],
-      100_000,
+      1000,
       1685441840,
       1685442840,
       1000,
@@ -39,7 +40,12 @@ module ticketland::event_test {
   
     // A new shared Event is created
     let event = take_shared<Event>(&mut scenario);
+    assert!(event::get_event_creator(&event) == admin, 1);
+    assert!(event::get_available_seats(&event) == 1000, 1);
+    assert!(event::get_resale_cap_bps(&event) == 1000, 1);
+    assert!(event::get_royalty_bps(&event) == 100, 1);
     return_shared(event);
+
 
     // A new owned NftEvent is 
     let nft_event = take_from_sender<NftEvent>(&mut scenario);
@@ -59,19 +65,20 @@ module ticketland::event_test {
 
     let organizer_cap = take_from_sender<EventOrganizerCap>(&mut scenario);
     let event = take_shared<Event>(&mut scenario);
+    let root1 = *root(&create_tree(100, 0, 59));
+    let root2 = *root(&create_tree(100, 60, 99));
 
-    // add_ticket_types(
-    //   vector[utf8(b"type1"), utf8(b"type2")],
-    //   mt_roots: vector<vector<u8>>,
-    //   n_tickets_list: vector<u32>,
-    //   sale_start_times: vector<u64>,
-    //   sale_end_times: vector<u64>,
-    //   seat_ranges: vector<vector<u64>>,
-
-    //   &mut event,
-    //   &organizer_cap,
-    //   ctx(&mut scenario),
-    // );
+    add_ticket_types(
+      vector[utf8(b"type1"), utf8(b"type2")],
+      vector[root1, root2],
+      vector[60, 40],
+      vector[0, 0],
+      vector[10, 10],
+      vector[vector[0, 59], vector[60, 99]],
+      &mut event,
+      &organizer_cap,
+      ctx(&mut scenario),
+    );
 
     return_to_sender(&mut scenario, organizer_cap);
     return_shared(event);
