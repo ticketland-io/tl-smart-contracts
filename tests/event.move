@@ -16,7 +16,7 @@ module ticketland::event_test {
     get_sale_type,
   };
   use ticketland::usdc::{USDC};
-  use ticketland::event_registry::{create_config, drop_config};
+  use ticketland::event_registry::{Config, create_config, drop_config};
   use ticketland::common_test::to_base;
   use ticketland::sale_type::{
     Free, FixedPrice, add_free_sale_type, add_fixed_price_sale_type, add_refundable_sale_type,
@@ -37,6 +37,19 @@ module ticketland::event_test {
       ctx(scenario),
     );
     next_tx(scenario, @admin);
+  }
+
+  public fun create_new_config(scenario: &mut Scenario): Config {
+    create_config(
+      vector[
+        type_name::into_string(type_name::get<USDC>()),
+        type_name::into_string(type_name::get<SUI>()),
+      ],
+      1000,
+      @protocol_fee_address,
+      vector[@operator_1, @operator_2],
+      ctx(scenario),
+    )
   }
 
   public fun setup_ticket_types(
@@ -65,17 +78,8 @@ module ticketland::event_test {
     );
 
     // create a dummy config
-    let config = create_config(
-      vector[
-        type_name::into_string(type_name::get<USDC>()),
-        type_name::into_string(type_name::get<SUI>()),
-      ],
-      1000,
-      @protocol_fee_address,
-      vector[@operator_1, @operator_2],
-      ctx(scenario),
-    );
-    
+    let config = create_new_config(scenario);
+
     // add free sale type to the first ticket type
     add_free_sale_type(
       event,
