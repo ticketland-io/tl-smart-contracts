@@ -3,7 +3,7 @@ module ticketland::fixed_price_sale_test {
   use sui::clock::{Self, Clock, increment_for_testing};
   use std::string::{utf8};
   use sui::coin::{Self, Coin, mint_for_testing, burn_for_testing};
-  // use sui::sui::SUI;
+  use sui::sui::SUI;
   use sui::test_scenario::{
     Self, Scenario, ctx, next_tx, end, take_from_sender, return_to_sender, 
     take_shared, return_shared, take_from_address,
@@ -118,6 +118,40 @@ module ticketland::fixed_price_sale_test {
     drop_config(config);
     return_shared(event);
     burn_for_testing(usdc_coins);
+    clock::destroy_for_testing(clock);
+    end(scenario);
+    end(scenario_buyer);
+  }
+
+  #[test(buyer=@0xf1)]
+  #[expected_failure(abort_code = 0x2, location = sui::dynamic_field)]
+  fun test_should_fail_if_wrong(buyer: address) {
+    let scenario = test_scenario::begin(@admin);
+    let clock = clock::create_for_testing(ctx(&mut scenario));
+    let (event, config, tree_2) = setup(&mut scenario, &clock);
+    let scenario_buyer = test_scenario::begin(buyer);
+    increment_for_testing(&mut clock, 10);
+    let proof = get_proof(&tree_2, 25);
+    // Ticket type 0 has a fixed price sale type that accepts USDC not SUI
+    let sui_coint = mint_for_testing<SUI>(to_base(100), ctx(&mut scenario_buyer));
+    next_tx(&mut scenario_buyer, buyer);
+
+    fixed_price(
+      &mut event,
+      &mut sui_coint,
+      1,
+      utf8(b"Paid Ticket"),
+      25,
+      utf8(b"25"),
+      proof,
+      &config,
+      &clock,
+      ctx(&mut scenario_buyer),
+    );
+    
+    drop_config(config);
+    return_shared(event);
+    burn_for_testing(sui_coint);
     clock::destroy_for_testing(clock);
     end(scenario);
     end(scenario_buyer);
