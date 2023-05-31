@@ -86,10 +86,11 @@ module ticketland::event {
     seats: Bitmap,
   }
 
+  /// Seat range of type [from, to]
   struct SeatRange has store {
     // from inclusive
     from: u64,
-    // to exclusive
+    // to inclusive
     to: u64
   }
 
@@ -107,7 +108,7 @@ module ticketland::event {
     sale_start_time: u64,
     /// The end time of the sale of this ticket type
     sale_end_time: u64,
-    /// The range of the seats in the venue this ticket type is for
+    /// The range of the seats in the venue this ticket type is for,
     seat_range: SeatRange,
   }
 

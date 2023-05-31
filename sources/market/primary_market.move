@@ -61,7 +61,7 @@ module ticketland::primary_market {
 
     // 3. Is seat_index within the seat range of the given ticket type
     let (from, to) = get_seat_range(ticket_type);
-    assert!(seat_index >= from && seat_index < to, E_INVALID_SEAT_INDEX);
+    assert!(seat_index >= from && seat_index <= to, E_INVALID_SEAT_INDEX);
 
     // 4. Check that the seat_index is available
     assert!(!bitmap::is_set(get_seats(event), seat_index), E_SEAT_NOT_AVAILABLE);

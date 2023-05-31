@@ -19,7 +19,7 @@ module ticketland::event_test {
   use ticketland::event_registry::{create_config, drop_config};
   use ticketland::common_test::to_base;
   use ticketland::sale_type::{
-    Free, FixedPrice, add_free_sale_type, add_fixed_price_sale_type,
+    Free, FixedPrice, add_free_sale_type, add_fixed_price_sale_type, add_refundable_sale_type,
   };
 
   public fun create_new_event(scenario: &mut Scenario) {
@@ -44,19 +44,21 @@ module ticketland::event_test {
     organizer_cap: &EventOrganizerCap,
     clock: &Clock,
     event: &mut Event,
-  ): (Tree, Tree) {
-    let tree_1 = create_tree(100, 0, 59);
+  ): (Tree, Tree, Tree) {
+    let tree_1 = create_tree(100, 0, 0);
     let root_1 = *root(&tree_1);
-    let tree_2 = create_tree(100, 60, 99);
+    let tree_2 = create_tree(100, 1, 59);
     let root_2 = *root(&tree_2);
+    let tree_3 = create_tree(100, 60, 99);
+    let root_3 = *root(&tree_3);
 
     add_ticket_types(
-      vector[utf8(b"type1"), utf8(b"type2")],
-      vector[root_1, root_2],
-      vector[60, 40],
-      vector[10, 10],
-      vector[20, 20],
-      vector[vector[0, 59], vector[60, 99]],
+      vector[utf8(b"type1"), utf8(b"type2"), utf8(b"type3")],
+      vector[root_1, root_2, root_3],
+      vector[1, 59, 40],
+      vector[10, 10, 10],
+      vector[20, 20, 20],
+      vector[vector[0, 0], vector[1, 59], vector[60, 99]],
       event,
       organizer_cap,
       ctx(scenario),
@@ -91,11 +93,20 @@ module ticketland::event_test {
       clock,
       organizer_cap,
     );
+
+    add_refundable_sale_type<SUI>(
+      event,
+      2,
+      to_base(50),
+      &config,
+      clock,
+      organizer_cap,
+    );
     
     next_tx(scenario, @admin);
     drop_config(config);
 
-    (tree_1, tree_2)
+    (tree_1, tree_2, tree_3)
   }
 
   fun setup(scenario: &mut Scenario) {

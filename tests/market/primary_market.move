@@ -12,14 +12,14 @@ module ticketland::primary_market_test {
   use ticketland::event::{Event, EventOrganizerCap, test_init};
   use ticketland::primary_market::{free_sale};
 
-  fun setup(scenario: &mut Scenario, clock: &Clock): (Event, Tree, Tree) {
+  fun setup(scenario: &mut Scenario, clock: &Clock): (Event, Tree) {
     test_init(ctx(scenario));
     create_new_event(scenario);
     next_tx(scenario, @admin);
     let event = take_shared<Event>(scenario);
     let organizer_cap = take_from_sender<EventOrganizerCap>(scenario);
     
-    let (tree_1, tree_2) = setup_ticket_types(
+    let (tree_1, _, _) = setup_ticket_types(
       scenario,
       &organizer_cap,
       clock,
@@ -29,24 +29,24 @@ module ticketland::primary_market_test {
     next_tx(scenario, @admin);
     return_to_sender(scenario, organizer_cap);
 
-    (event, tree_1, tree_2)
+    (event, tree_1)
   }
 
   #[test(buyer=@0xf1)]
   fun test_free_sale_should_mint_cnt(buyer: address) {
     let scenario = test_scenario::begin(@admin);
     let clock = clock::create_for_testing(ctx(&mut scenario));
-    let (event, tree_1, _) = setup(&mut scenario, &clock);
+    let (event, tree_1) = setup(&mut scenario, &clock);
     let scenario_buyer = test_scenario::begin(buyer);
-    let proof = get_proof(&tree_1, 12);
+    let proof = get_proof(&tree_1, 0);
     increment_for_testing(&mut clock, 10);
 
     free_sale(
       &mut event,
       0,
       utf8(b"VIP Ticket"),
-      12,
-      utf8(b"12"),
+      0,
+      utf8(b"0"),
       proof,
       &clock,
       ctx(&mut scenario_buyer),
@@ -68,16 +68,16 @@ module ticketland::primary_market_test {
   fun test_free_sale_should_fail_if_sale_not_open(buyer: address) {
     let scenario = test_scenario::begin(@admin);
     let clock = clock::create_for_testing(ctx(&mut scenario));
-    let (event, tree_1, _) = setup(&mut scenario, &clock);
+    let (event, tree_1) = setup(&mut scenario, &clock);
     let scenario_buyer = test_scenario::begin(buyer);
-    let proof = get_proof(&tree_1, 12);
+    let proof = get_proof(&tree_1, 0);
 
     free_sale(
       &mut event,
       0,
       utf8(b"VIP Ticket"),
-      12,
-      utf8(b"12"),
+      0,
+      utf8(b"0"),
       proof,
       &clock,
       ctx(&mut scenario_buyer),
@@ -94,17 +94,17 @@ module ticketland::primary_market_test {
   fun test_free_sale_should_fail_if_sale_not_closed(buyer: address) {
     let scenario = test_scenario::begin(@admin);
     let clock = clock::create_for_testing(ctx(&mut scenario));
-    let (event, tree_1, _) = setup(&mut scenario, &clock);
+    let (event, tree_1) = setup(&mut scenario, &clock);
     let scenario_buyer = test_scenario::begin(buyer);
     increment_for_testing(&mut clock, 21);
-    let proof = get_proof(&tree_1, 12);
+    let proof = get_proof(&tree_1, 0);
 
     free_sale(
       &mut event,
       0,
       utf8(b"VIP Ticket"),
-      12,
-      utf8(b"12"),
+      0,
+      utf8(b"0"),
       proof,
       &clock,
       ctx(&mut scenario_buyer),
@@ -121,17 +121,17 @@ module ticketland::primary_market_test {
   fun test_free_sale_should_fail_if_wrong_mt_proof(buyer: address) {
     let scenario = test_scenario::begin(@admin);
     let clock = clock::create_for_testing(ctx(&mut scenario));
-    let (event, tree_1, _) = setup(&mut scenario, &clock);
+    let (event, tree_1) = setup(&mut scenario, &clock);
     let scenario_buyer = test_scenario::begin(buyer);
     increment_for_testing(&mut clock, 10);
-    let proof = get_proof(&tree_1, 13); // wrong proof
+    let proof = get_proof(&tree_1, 1); // wrong proof
 
     free_sale(
       &mut event,
       0,
       utf8(b"VIP Ticket"),
-      12,
-      utf8(b"12"),
+      0,
+      utf8(b"0"),
       proof,
       &clock,
       ctx(&mut scenario_buyer),
@@ -148,17 +148,17 @@ module ticketland::primary_market_test {
   fun test_free_sale_should_fail_if_seat_index_does_to_belong_ticket_type(buyer: address) {
     let scenario = test_scenario::begin(@admin);
     let clock = clock::create_for_testing(ctx(&mut scenario));
-    let (event, tree_1, _) = setup(&mut scenario, &clock);
+    let (event, tree_1) = setup(&mut scenario, &clock);
     let scenario_buyer = test_scenario::begin(buyer);
     increment_for_testing(&mut clock, 10);
-    let proof = get_proof(&tree_1, 13); // wrong proof
+    let proof = get_proof(&tree_1, 0);
 
     free_sale(
       &mut event,
       1, // ticket type index
       utf8(b"VIP Ticket"),
-      12, // seat index does not belong to ticket type index
-      utf8(b"12"),
+      0, // seat index does not belong to ticket type index
+      utf8(b"1"),
       proof,
       &clock,
       ctx(&mut scenario_buyer),

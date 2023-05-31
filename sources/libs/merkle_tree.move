@@ -35,7 +35,7 @@ module ticketland::merkle_tree {
 
       i = i + 1;
     };
-
+    
     assert!(compare_vector(&computed_hash, root) == EQUAL, E_VERIFICATION_FAILED);
   }
 }
