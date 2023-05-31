@@ -3,6 +3,7 @@ module ticketland::event_registry {
   use std::string::{String};
   use sui::vec_map::{Self, VecMap};
   use std::vector;
+  use std::hash::sha3_256;
   use sui::object::{Self, UID};
   use std::ascii;
   use sui::event::{emit};
@@ -19,8 +20,8 @@ module ticketland::event_registry {
   struct Config has key {
     id: UID,
     /// The list of supported coins that can be used in purchases. The string value is a sui::type_name::TypeName
-    /// Note it's the TypeName of T and not Coin<T>. The latter is redundant
-    supported_coins: VecMap<ascii::String, bool>,
+    /// Note it's the sha3 hash of TypeName of Coin<T>
+    supported_coins: VecMap<vector<u8>, bool>,
     /// The fees collected by the protocol during various interaction i.e. primary sale, secondary etc.
     protocol_fee: u64,
     /// The address that will be receiving those fees
@@ -74,7 +75,8 @@ module ticketland::event_registry {
 
     while (i < len) {
       let coin_type = *vector::borrow(&supported_coins, i);
-      vec_map::insert(&mut config.supported_coins, coin_type, true);
+      let key = sha3_256(ascii::into_bytes(coin_type));
+      vec_map::insert(&mut config.supported_coins, key, true);
 
       i = i + 1;
     };
@@ -137,7 +139,7 @@ module ticketland::event_registry {
     }
   }
 
-  public fun is_coin_supported(config: &Config, coin_type: &ascii::String): bool {
+  public fun is_coin_supported(config: &Config, coin_type: &vector<u8>): bool {
     vec_map::contains(&config.supported_coins, coin_type)
   }
 

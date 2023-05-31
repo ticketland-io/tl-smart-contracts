@@ -2,6 +2,8 @@
 module ticketland::event_registry_test {
   use std::type_name;
   use std::string::{utf8};
+  use std::ascii;
+  use std::hash::sha3_256;
   use sui::sui::SUI;
   use sui::test_scenario::{
     Self, Scenario, ctx, next_tx, end, take_from_sender, return_to_sender, 
@@ -56,8 +58,8 @@ module ticketland::event_registry_test {
     
     assert!(fee == 1000, 1);
     assert!(protocol_addr == @protocol_fee_address, 1);
-    assert!(is_coin_supported(&config, &type_name::into_string(type_name::get<USDC>())), 1);
-    assert!(is_coin_supported(&config, &type_name::into_string(type_name::get<SUI>())), 1);
+    assert!(is_coin_supported(&config, &sha3_256(ascii::into_bytes(type_name::into_string(type_name::get<USDC>())))), 1);
+    assert!(is_coin_supported(&config, &sha3_256(ascii::into_bytes(type_name::into_string(type_name::get<SUI>())))), 1);
 
     return_shared(config);
     end(scenario);
