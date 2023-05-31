@@ -220,4 +220,53 @@ module ticketland::fixed_price_sale_test {
     end(scenario);
     end(scenario_buyer);
   }
+
+  #[test(buyer=@0xf1)]
+  #[expected_failure(abort_code = 0x2, location = ticketland::primary_market)]
+  fun test_should_fail_if_seat_not_available(buyer: address) {
+    let scenario = test_scenario::begin(@admin);
+    let clock = clock::create_for_testing(ctx(&mut scenario));
+    let (event, config, tree_2) = setup(&mut scenario, &clock);
+    let scenario_buyer = test_scenario::begin(buyer);
+    let proof = get_proof(&tree_2, 25);
+    increment_for_testing(&mut clock, 10);
+    let usdc_coins = mint_for_testing<USDC>(to_base(100_000), ctx(&mut scenario_buyer));
+    next_tx(&mut scenario_buyer, buyer);
+
+    fixed_price(
+      &mut event,
+      &mut usdc_coins,
+      1,
+      utf8(b"Paid Ticket"),
+      25,
+      utf8(b"25"),
+      proof,
+      &config,
+      &clock,
+      ctx(&mut scenario_buyer),
+    );
+
+    next_tx(&mut scenario_buyer, buyer);
+
+    // try to buy the same ticket
+    fixed_price(
+      &mut event,
+      &mut usdc_coins,
+      1,
+      utf8(b"Paid Ticket"),
+      25,
+      utf8(b"25"),
+      proof,
+      &config,
+      &clock,
+      ctx(&mut scenario_buyer),
+    );
+    
+    drop_config(config);
+    return_shared(event);
+    burn_for_testing(usdc_coins);
+    clock::destroy_for_testing(clock);
+    end(scenario);
+    end(scenario_buyer);
+  }
 }
