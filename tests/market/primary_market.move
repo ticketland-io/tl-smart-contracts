@@ -115,4 +115,31 @@ module ticketland::primary_market_test {
     end(scenario);
     end(scenario_buyer);
   }
+
+  #[test(buyer=@0xf1)]
+  #[expected_failure(abort_code = 0x0, location = ticketland::merkle_tree)]
+  fun test_free_sale_should_fail_if_wrong_mt_proof(buyer: address) {
+    let scenario = test_scenario::begin(@admin);
+    let clock = clock::create_for_testing(ctx(&mut scenario));
+    let (event, tree_1, _) = setup(&mut scenario, &clock);
+    let scenario_buyer = test_scenario::begin(buyer);
+    increment_for_testing(&mut clock, 10);
+    let proof = get_proof(&tree_1, 13); // wrong proof
+
+    free_sale(
+      &mut event,
+      0,
+      utf8(b"VIP Ticket"),
+      12,
+      utf8(b"12"),
+      proof,
+      &clock,
+      ctx(&mut scenario_buyer),
+    );
+
+    return_shared(event);
+    clock::destroy_for_testing(clock);
+    end(scenario);
+    end(scenario_buyer);
+  }
 }
