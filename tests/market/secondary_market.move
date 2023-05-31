@@ -25,7 +25,6 @@ module ticketland::secondary_market_test {
     ];
     // 1 USDC = 0.5 SUI in 10,000 BPS. Note this will be store as SUI => USDC => 20,000 i.e 1 SUI = 2 USDC
     let rates = vector[5000];
-    
     let exchange_rate = create_exchange_rate(coins, rates, ctx(&mut scenario));
 
     next_tx(&mut scenario, @admin);
@@ -36,10 +35,10 @@ module ticketland::secondary_market_test {
 
   #[test(buyer=@0xf1)]
   fun test_list_cnt(buyer: address) {
-    let exchange_rate = setup();
-    fixed_price_purchase(buyer);
-
     let scenario_buyer = test_scenario::begin(buyer);
+    fixed_price_purchase(buyer);
+    let exchange_rate = setup();
+
     let cnt = take_from_sender<CNT>(&mut scenario_buyer);
     let event = take_shared<Event>(&mut scenario_buyer);
 

@@ -86,7 +86,7 @@ module ticketland::secondary_market {
 
     // The reason we share is described in the ticket module. However, sharing is important also because
     // we want to be able to pass the CNT object into the `purchase_listing`. If the object is owned the buyer, who calls
-    // the function won't be able to pass it.
+    // the function, won't be able to pass it.
     share_cnt(cnt);
     share_object(listing);
   }
