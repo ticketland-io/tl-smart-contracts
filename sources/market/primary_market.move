@@ -64,7 +64,7 @@ module ticketland::primary_market {
     assert!(seat_index >= from && seat_index < to, E_INVALID_SEAT_INDEX);
 
     // 4. Check that the seat_index is available
-    assert!(bitmap::is_set(get_seats(event), seat_index), E_SEAT_NOT_AVAILABLE);
+    assert!(!bitmap::is_set(get_seats(event), seat_index), E_SEAT_NOT_AVAILABLE);
 
     // 5. Verify the merkle path
     let mt_root = get_ticket_type_mt_root(ticket_type);

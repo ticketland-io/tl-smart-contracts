@@ -1,7 +1,7 @@
 #[test_only]
 module ticketland::event_test {
   use std::string::{utf8};
-  use ticketland::merkle_tree_test::{create_tree, root};
+  use ticketland::merkle_tree_test::{Tree, create_tree, root};
   use sui::clock::{Self, Clock};
   use std::type_name;
   use sui::sui::SUI;
@@ -44,10 +44,11 @@ module ticketland::event_test {
     organizer_cap: &EventOrganizerCap,
     clock: &Clock,
     event: &mut Event,
-  ) {
-    let tree = create_tree(100, 0, 59);
-    let root_1 = *root(&tree);
-    let root_2 = *root(&create_tree(100, 60, 99));
+  ): (Tree, Tree) {
+    let tree_1 = create_tree(100, 0, 59);
+    let root_1 = *root(&tree_1);
+    let tree_2 = create_tree(100, 60, 99);
+    let root_2 = *root(&tree_2);
 
     add_ticket_types(
       vector[utf8(b"type1"), utf8(b"type2")],
@@ -93,6 +94,8 @@ module ticketland::event_test {
     
     next_tx(scenario, @admin);
     drop_config(config);
+
+    (tree_1, tree_2)
   }
 
   fun setup(scenario: &mut Scenario) {
