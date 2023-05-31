@@ -45,7 +45,7 @@ module ticketland::event_test {
         type_name::into_string(type_name::get<USDC>()),
         type_name::into_string(type_name::get<SUI>()),
       ],
-      1000,
+      500,
       @protocol_fee_address,
       vector[@operator_1, @operator_2],
       ctx(scenario),
