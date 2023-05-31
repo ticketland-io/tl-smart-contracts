@@ -66,7 +66,7 @@ module ticketland::free_sale_test {
   }
 
   #[test(buyer=@0xf1)]
-  fun test_should_mint_cnt(buyer: address) {
+  fun test_sale_should_mint_cnt(buyer: address) {
     free_purchase(buyer);
   }
 
