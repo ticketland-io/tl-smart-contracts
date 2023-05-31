@@ -33,6 +33,37 @@ module ticketland::primary_market_test {
   }
 
   #[test(buyer=@0xf1)]
+  fun test_free_sale_should_mint_cnt(buyer: address) {
+    let scenario = test_scenario::begin(@admin);
+    let clock = clock::create_for_testing(ctx(&mut scenario));
+    let (event, tree_1, _) = setup(&mut scenario, &clock);
+    let scenario_buyer = test_scenario::begin(buyer);
+    let proof = get_proof(&tree_1, 12);
+    increment_for_testing(&mut clock, 10);
+
+    free_sale(
+      &mut event,
+      0,
+      utf8(b"VIP Ticket"),
+      12,
+      utf8(b"12"),
+      proof,
+      &clock,
+      ctx(&mut scenario_buyer),
+    );
+    next_tx(&mut scenario_buyer, buyer);
+
+    // CNT object is created and sent to the buyer
+    let cnt = take_from_sender<CNT>(&mut scenario_buyer);
+
+    return_shared(event);
+    return_to_sender(&mut scenario_buyer, cnt);
+    clock::destroy_for_testing(clock);
+    end(scenario);
+    end(scenario_buyer);
+  }
+
+  #[test(buyer=@0xf1)]
   #[expected_failure(abort_code = 0x0, location = ticketland::primary_market)]
   fun test_free_sale_should_fail_if_sale_not_open(buyer: address) {
     let scenario = test_scenario::begin(@admin);
@@ -59,13 +90,14 @@ module ticketland::primary_market_test {
   }
 
   #[test(buyer=@0xf1)]
-  fun test_free_sale_should_mint_cnt(buyer: address) {
+  #[expected_failure(abort_code = 0x0, location = ticketland::primary_market)]
+  fun test_free_sale_should_fail_if_sale_not_closed(buyer: address) {
     let scenario = test_scenario::begin(@admin);
     let clock = clock::create_for_testing(ctx(&mut scenario));
     let (event, tree_1, _) = setup(&mut scenario, &clock);
     let scenario_buyer = test_scenario::begin(buyer);
+    increment_for_testing(&mut clock, 21);
     let proof = get_proof(&tree_1, 12);
-    increment_for_testing(&mut clock, 10);
 
     free_sale(
       &mut event,
@@ -77,13 +109,8 @@ module ticketland::primary_market_test {
       &clock,
       ctx(&mut scenario_buyer),
     );
-    next_tx(&mut scenario_buyer, buyer);
-
-    // CNT object is created and sent to the buyer
-    let cnt = take_from_sender<CNT>(&mut scenario_buyer);
 
     return_shared(event);
-    return_to_sender(&mut scenario_buyer, cnt);
     clock::destroy_for_testing(clock);
     end(scenario);
     end(scenario_buyer);
