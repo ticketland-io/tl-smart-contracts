@@ -38,8 +38,7 @@ module ticketland::fixed_price_sale_test {
     (event, config, tree_2)
   }
 
-  #[test(buyer=@0xf1)]
-  fun test_sale_should_mint_cnt(buyer: address) {
+  fun fixed_price_purchase(buyer: address) {
     let scenario = test_scenario::begin(@admin);
     let clock = clock::create_for_testing(ctx(&mut scenario));
     let (event, config, tree_2) = setup(&mut scenario, &clock);
@@ -84,5 +83,10 @@ module ticketland::fixed_price_sale_test {
     clock::destroy_for_testing(clock);
     end(scenario);
     end(scenario_buyer);
+  }
+
+  #[test(buyer=@0xf1)]
+  fun test_sale_should_mint_cnt(buyer: address) {
+    fixed_price_purchase(buyer)
   }
 }

@@ -9,7 +9,7 @@ module ticketland::free_sale_test {
     take_shared, return_shared,
   };
   use ticketland::event_test::{create_new_event, setup_ticket_types};
-  use ticketland::event::{Event, EventOrganizerCap, test_init};
+  use ticketland::event::{Event, EventOrganizerCap, test_init, get_available_seats};
   use ticketland::primary_market::{free_sale};
 
   fun setup(scenario: &mut Scenario, clock: &Clock): (Event, Tree) {
@@ -32,8 +32,7 @@ module ticketland::free_sale_test {
     (event, tree_1)
   }
 
-  #[test(buyer=@0xf1)]
-  fun test_should_mint_cnt(buyer: address) {
+  fun free_purchase(buyer: address) {
     let scenario = test_scenario::begin(@admin);
     let clock = clock::create_for_testing(ctx(&mut scenario));
     let (event, tree_1) = setup(&mut scenario, &clock);
@@ -56,11 +55,19 @@ module ticketland::free_sale_test {
     // CNT object is created and sent to the buyer
     let cnt = take_from_sender<CNT>(&mut scenario_buyer);
 
+    // The available seats is reduced
+    assert!(get_available_seats(&event) == 99, 1);
+
     return_shared(event);
     return_to_sender(&mut scenario_buyer, cnt);
     clock::destroy_for_testing(clock);
     end(scenario);
     end(scenario_buyer);
+  }
+
+  #[test(buyer=@0xf1)]
+  fun test_should_mint_cnt(buyer: address) {
+    free_purchase(buyer);
   }
 
   #[test(buyer=@0xf1)]

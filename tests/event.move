@@ -29,7 +29,7 @@ module ticketland::event_test {
       utf8(b"https://app.ticketland.io/1"),
       vector[utf8(b"key1"), utf8(b"key2")],
       vector[utf8(b"value1"), utf8(b"value1")],
-      1000,
+      100,
       100, // start ts
       200, // end ts
       1000,
@@ -127,7 +127,7 @@ module ticketland::event_test {
     // A new shared Event is created
     let event = take_shared<Event>(&mut scenario);
     assert!(get_event_creator(&event) == @admin, 1);
-    assert!(get_available_seats(&event) == 1000, 1);
+    assert!(get_available_seats(&event) == 100, 1);
     assert!(get_resale_cap_bps(&event) == 1000, 1);
     assert!(get_royalty_bps(&event) == 100, 1);
     return_shared(event);
