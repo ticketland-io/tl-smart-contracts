@@ -9,7 +9,7 @@ module ticketland::refunable_sale_test {
     take_shared, return_shared,
   };
   use ticketland::merkle_tree_test::{Tree, get_proof};
-  // use ticketland::usdc::{USDC};
+  use ticketland::usdc::{USDC};
   use ticketland::ticket::{CNT, get_cnt_id};
   use ticketland::event_test::{create_new_event, setup_ticket_types};
   use ticketland::event::{Event, EventOrganizerCap, test_init};
@@ -110,6 +110,37 @@ module ticketland::refunable_sale_test {
     
     return_shared(event);
     burn_for_testing(sui_coins);
+    clock::destroy_for_testing(clock);
+    end(scenario);
+    end(scenario_buyer);
+  }
+
+  #[test(buyer=@0xf1)]
+  #[expected_failure(abort_code = 0x2, location = sui::dynamic_field)]
+  fun test_should_fail_if_wrong(buyer: address) {
+    let scenario = test_scenario::begin(@admin);
+    let clock = clock::create_for_testing(ctx(&mut scenario));
+    let (event, tree_3) = setup(&mut scenario, &clock);
+    let scenario_buyer = test_scenario::begin(buyer);
+    let proof = get_proof(&tree_3, 80);
+    increment_for_testing(&mut clock, 10);
+    let usdc_coins = mint_for_testing<USDC>(to_base(50), ctx(&mut scenario_buyer));
+    next_tx(&mut scenario_buyer, buyer);
+
+    refundable(
+      &mut event,
+      &mut usdc_coins,
+      2,
+      utf8(b"Refundable Ticket"),
+      80,
+      utf8(b"80"),
+      proof,
+      &clock,
+      ctx(&mut scenario_buyer),
+    );
+    
+    return_shared(event);
+    burn_for_testing(usdc_coins);
     clock::destroy_for_testing(clock);
     end(scenario);
     end(scenario_buyer);
