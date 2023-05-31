@@ -169,4 +169,43 @@ module ticketland::primary_market_test {
     end(scenario);
     end(scenario_buyer);
   }
+
+  #[test(buyer=@0xf1)]
+  #[expected_failure(abort_code = 0x2, location = ticketland::primary_market)]
+  fun test_free_sale_should_fail_if_seat_not_available(buyer: address) {
+    let scenario = test_scenario::begin(@admin);
+    let clock = clock::create_for_testing(ctx(&mut scenario));
+    let (event, tree_1) = setup(&mut scenario, &clock);
+    let scenario_buyer = test_scenario::begin(buyer);
+    increment_for_testing(&mut clock, 10);
+    let proof = get_proof(&tree_1, 0);
+
+    free_sale(
+      &mut event,
+      0,
+      utf8(b"VIP Ticket"),
+      0,
+      utf8(b"0"),
+      proof,
+      &clock,
+      ctx(&mut scenario_buyer),
+    );
+    next_tx(&mut scenario_buyer, buyer);
+    // try to get the same ticket again
+    free_sale(
+      &mut event,
+      0,
+      utf8(b"VIP Ticket"),
+      0,
+      utf8(b"0"),
+      proof,
+      &clock,
+      ctx(&mut scenario_buyer),
+    );
+
+    return_shared(event);
+    clock::destroy_for_testing(clock);
+    end(scenario);
+    end(scenario_buyer);
+  }
 }
