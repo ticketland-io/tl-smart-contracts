@@ -2,6 +2,7 @@ module ticketland::collection_utils {
   use std::vector;
   use std::ascii;
   use sui::math::{min};
+  use std::hash::sha3_256;
   
   /// Constants
   const EQUAL: u8 = 0;
@@ -42,5 +43,10 @@ module ticketland::collection_utils {
     vector::append(&mut vec_str, ascii::into_bytes(b));
     
     ascii::string(vec_str)
+  }
+
+  public fun get_composite_key(a: ascii::String, b: ascii::String): vector<u8> {
+    let key = concat_ascii_strings(a, b);
+    sha3_256(ascii::into_bytes(key))
   }
 }

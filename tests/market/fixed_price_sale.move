@@ -38,7 +38,7 @@ module ticketland::fixed_price_sale_test {
     (event, config, tree_2)
   }
 
-  fun fixed_price_purchase(buyer: address) {
+  public fun fixed_price_purchase(buyer: address) {
     let scenario = test_scenario::begin(@admin);
     let clock = clock::create_for_testing(ctx(&mut scenario));
     let (event, config, tree_2) = setup(&mut scenario, &clock);
