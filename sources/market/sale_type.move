@@ -36,7 +36,12 @@ module ticketland::sale_type {
   }
 
   fun assert_coin_supported<COIN>(config: &Config) {
-    let coin_type = sha3_256(ascii::into_bytes(type_name::into_string(type_name::get<COIN>())));
+    let coin_type = sha3_256(
+      ascii::into_bytes(
+        type_name::into_string(type_name::get<COIN>())
+      )
+    );
+
     assert!(is_coin_supported(config, &coin_type), E_COIN_NOT_SUPPORTED);
   }
 
