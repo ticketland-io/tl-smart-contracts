@@ -9,3 +9,15 @@ Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-fram
 [addresses]
 ticketland =  "0x48533480c1ee2d10dd8888c0650cd59db577b1298cec7fa52261ad41d18567af"
 sui =  "0000000000000000000000000000000000000000000000000000000000000002"
+
+# Used in tests. We have to declare these values here as well so they can be filled in the [dev-addresses] section
+admin = "_"
+protocol_fee_address = "_"
+operator_1 = "_"
+operator_2 = "_"
+
+[dev-addresses]
+admin = "0xab"
+protocol_fee_address = "0xbc"
+operator_1 = "0xcd"
+operator_2 = "0xde"

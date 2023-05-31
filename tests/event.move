@@ -22,7 +22,7 @@ module ticketland::event_test {
     Free, FixedPrice, add_free_sale_type, add_fixed_price_sale_type,
   };
 
-  fun create_new_event(scenario: &mut Scenario, admin: address) {
+  public fun create_new_event(scenario: &mut Scenario) {
     create_event(
       utf8(b"Event 1"),
       utf8(b"Description 1"),
@@ -36,18 +36,14 @@ module ticketland::event_test {
       100,
       ctx(scenario),
     );
-    next_tx(scenario, admin);
+    next_tx(scenario, @admin);
   }
 
-  fun setup_ticket_types(
+  public fun setup_ticket_types(
     scenario: &mut Scenario,
     organizer_cap: &EventOrganizerCap,
     clock: &Clock,
     event: &mut Event,
-    admin: address,
-    protocol_fee_address: address,
-    operator1: address,
-    operator2: address,
   ) {
     let tree = create_tree(100, 0, 59);
     let root_1 = *root(&tree);
@@ -72,8 +68,8 @@ module ticketland::event_test {
         type_name::into_string(type_name::get<SUI>()),
       ],
       1000,
-      protocol_fee_address,
-      vector[operator1, operator2],
+      @protocol_fee_address,
+      vector[@operator_1, @operator_2],
       ctx(scenario),
     );
     
@@ -95,24 +91,24 @@ module ticketland::event_test {
       organizer_cap,
     );
     
-    next_tx(scenario, admin);
+    next_tx(scenario, @admin);
     drop_config(config);
   }
 
-  fun setup(scenario: &mut Scenario, admin: address) {
+  fun setup(scenario: &mut Scenario) {
     test_init(ctx(scenario));
-    create_new_event(scenario, admin);
-    next_tx(scenario, admin);
+    create_new_event(scenario);
+    next_tx(scenario, @admin);
   }
 
-  #[test(admin=@0xab)]
-  fun test_create_event(admin: address) {
-    let scenario = test_scenario::begin(admin);
-    setup(&mut scenario, admin);
+  #[test]
+  fun test_create_event() {
+    let scenario = test_scenario::begin(@admin);
+    setup(&mut scenario);
   
     // A new shared Event is created
     let event = take_shared<Event>(&mut scenario);
-    assert!(get_event_creator(&event) == admin, 1);
+    assert!(get_event_creator(&event) == @admin, 1);
     assert!(get_available_seats(&event) == 1000, 1);
     assert!(get_resale_cap_bps(&event) == 1000, 1);
     assert!(get_royalty_bps(&event) == 100, 1);
@@ -130,10 +126,10 @@ module ticketland::event_test {
     end(scenario);
   }
 
-  #[test(admin=@0xab)]
-  fun test_add_ticket_types(admin: address) {
-    let scenario = test_scenario::begin(admin);
-    setup(&mut scenario, admin);
+  #[test]
+  fun test_add_ticket_types() {
+    let scenario = test_scenario::begin(@admin);
+    setup(&mut scenario);
 
     let organizer_cap = take_from_sender<EventOrganizerCap>(&mut scenario);
     let event = take_shared<Event>(&mut scenario);
@@ -176,15 +172,10 @@ module ticketland::event_test {
     end(scenario);
   }
 
-  #[test(admin=@0xab, protocol_fee_address=@0xbc, operator1=@0xcd, operator2=@0xde)]
-  fun test_add_sale_type(
-    admin: address,
-    protocol_fee_address: address,
-    operator1: address,
-    operator2: address,
-  ) {
-    let scenario = test_scenario::begin(admin);
-    setup(&mut scenario, admin);
+  #[test]
+  fun test_add_sale_type() {
+    let scenario = test_scenario::begin(@admin);
+    setup(&mut scenario);
     let organizer_cap = take_from_sender<EventOrganizerCap>(&mut scenario);
     let event = take_shared<Event>(&mut scenario);
     let clock = clock::create_for_testing(ctx(&mut scenario));
@@ -194,10 +185,6 @@ module ticketland::event_test {
       &organizer_cap,
       &mut clock,
       &mut event,
-      admin,
-      protocol_fee_address,
-      operator1,
-      operator2,
     );
 
     // check that sale types were added. It will abort if sale types cannot be found
@@ -210,16 +197,11 @@ module ticketland::event_test {
     end(scenario);
   }
 
-  #[test(admin=@0xab, protocol_fee_address=@0xbc, operator1=@0xcd, operator2=@0xde)]
+  #[test]
   #[expected_failure(abort_code = 0x4, location = ticketland::event)]
-  fun test_add_sale_type_fails_when_wrong_time(
-    admin: address,
-    protocol_fee_address: address,
-    operator1: address,
-    operator2: address,
-  ) {
-    let scenario = test_scenario::begin(admin);
-    setup(&mut scenario, admin);
+  fun test_add_sale_type_fails_when_wrong_time() {
+    let scenario = test_scenario::begin(@admin);
+    setup(&mut scenario);
     let organizer_cap = take_from_sender<EventOrganizerCap>(&mut scenario);
     let event = take_shared<Event>(&mut scenario);
     let clock = clock::create_for_testing(ctx(&mut scenario));
@@ -230,10 +212,6 @@ module ticketland::event_test {
       &organizer_cap,
       &mut clock,
       &mut event,
-      admin,
-      protocol_fee_address,
-      operator1,
-      operator2,
     );
 
     return_to_sender(&mut scenario, organizer_cap);
@@ -242,16 +220,11 @@ module ticketland::event_test {
     end(scenario);
   }
 
-  #[test(admin=@0xab, protocol_fee_address=@0xbc, operator1=@0xcd, operator2=@0xde)]
+  #[test]
   #[expected_failure(abort_code = 0x3, location = ticketland::event)]
-  fun test_cannot_reset_sale_type(
-    admin: address,
-    protocol_fee_address: address,
-    operator1: address,
-    operator2: address,
-  ) {
-    let scenario = test_scenario::begin(admin);
-    setup(&mut scenario, admin);
+  fun test_cannot_reset_sale_type() {
+    let scenario = test_scenario::begin(@admin);
+    setup(&mut scenario);
     let organizer_cap = take_from_sender<EventOrganizerCap>(&mut scenario);
     let event = take_shared<Event>(&mut scenario);
     let clock = clock::create_for_testing(ctx(&mut scenario));
@@ -261,10 +234,6 @@ module ticketland::event_test {
       &organizer_cap,
       &mut clock,
       &mut event,
-      admin,
-      protocol_fee_address,
-      operator1,
-      operator2,
     );
     
     // add free sale type to the first ticket type

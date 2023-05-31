@@ -18,19 +18,13 @@ module ticketland::event_registry_test {
     usdc::test_init(ctx(scenario));
   }
 
-  fun setup(scenario: &mut Scenario, admin: address) {
+  fun setup(scenario: &mut Scenario) {
     init_currencies(scenario);
     event_registry::test_init(ctx(scenario));
-    next_tx(scenario, admin);
+    next_tx(scenario, @admin);
   }
 
-  fun setup_config(
-    scenario: &mut Scenario,
-    admin: address,
-    protocol_fee_address: address,
-    operator1: address,
-    operator2: address,
-  ) {
+  fun setup_config(scenario: &mut Scenario) {
     let admin_cap = take_from_sender<AdminCap>(scenario);
     let config = take_shared<Config>(scenario);
 
@@ -42,31 +36,26 @@ module ticketland::event_registry_test {
         type_name::into_string(type_name::get<SUI>()),
       ],
       1000,
-      protocol_fee_address,
-      vector[operator1, operator2],
+      @protocol_fee_address,
+      vector[@operator_1, @operator_2],
     );
 
     return_to_sender(scenario, admin_cap);
     return_shared(config);
-    next_tx(scenario, admin);
+    next_tx(scenario, @admin);
   }
 
-  #[test(admin=@0xab, protocol_fee_address=@0xbc, operator1=@0xcd, operator2=@0xde)]
-  fun test_update_config(
-    admin: address,
-    protocol_fee_address: address,
-    operator1: address,
-    operator2: address,
-  ) {
-    let scenario = test_scenario::begin(admin);
-    setup(&mut scenario, admin);
-    setup_config(&mut scenario, admin, protocol_fee_address, operator1, operator2);
+  #[test]
+  fun test_update_config() {
+    let scenario = test_scenario::begin(@admin);
+    setup(&mut scenario);
+    setup_config(&mut scenario);
 
     let config = take_shared<Config>(&mut scenario);
     let (fee, protocol_addr) = get_protocol_info(&config);
     
     assert!(fee == 1000, 1);
-    assert!(protocol_addr == protocol_fee_address, 1);
+    assert!(protocol_addr == @protocol_fee_address, 1);
     assert!(is_coin_supported(&config, &type_name::into_string(type_name::get<USDC>())), 1);
     assert!(is_coin_supported(&config, &type_name::into_string(type_name::get<SUI>())), 1);
 
@@ -74,16 +63,11 @@ module ticketland::event_registry_test {
     end(scenario);
   }
 
-  #[test(admin=@0xab, protocol_fee_address=@0xbc, operator1=@0xcd, operator2=@0xde)]
-  fun test_create_event(
-    admin: address,
-    protocol_fee_address: address,
-    operator1: address,
-    operator2: address,
-  ) {
-    let scenario = test_scenario::begin(admin);
-    setup(&mut scenario, admin);
-    setup_config(&mut scenario, admin, protocol_fee_address, operator1, operator2);
+  #[test]
+  fun test_create_event() {
+    let scenario = test_scenario::begin(@admin);
+    setup(&mut scenario);
+    setup_config(&mut scenario);
     let config = take_shared<Config>(&mut scenario);
 
     create_event(
@@ -100,7 +84,7 @@ module ticketland::event_registry_test {
       &config,
       ctx(&mut scenario),
     );
-    next_tx(&mut scenario, admin);
+    next_tx(&mut scenario, @admin);
 
     // A new shared Event is created
     let event = take_shared<Event>(&mut scenario);
