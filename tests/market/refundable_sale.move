@@ -2,7 +2,7 @@
 module ticketland::refunable_sale_test {
   use sui::clock::{Self, Clock, increment_for_testing};
   use std::string::{utf8};
-  use sui::coin::{mint_for_testing, burn_for_testing};
+  use sui::coin::{Self, Coin, mint_for_testing, burn_for_testing};
   use sui::sui::SUI;
   use sui::test_scenario::{
     Self, Scenario, ctx, next_tx, end, take_from_sender, return_to_sender, 
@@ -13,8 +13,9 @@ module ticketland::refunable_sale_test {
   use ticketland::ticket::{CNT, get_cnt_id};
   use ticketland::event_test::{create_new_event, setup_ticket_types};
   use ticketland::event::{Event, EventOrganizerCap, test_init};
+  use ticketland::attendance::{create_config, drop_config, set_attended_for_testing};
   use ticketland::primary_market::{refundable};
-  use ticketland::basic_sale::{Refund, get_refund_info};
+  use ticketland::basic_sale::{Refund, get_refund_info, claim_refund};
   use ticketland::common_test::{to_base};
 
   fun setup(scenario: &mut Scenario, clock: &Clock): (Event, Tree) {
@@ -81,7 +82,7 @@ module ticketland::refunable_sale_test {
 
   #[test(buyer=@0xf1)]
   fun test_sale_should_mint_cnt(buyer: address) {
-    refundable_purchase(buyer)
+    refundable_purchase(buyer);
   }
 
   #[test(buyer=@0xf1)]
@@ -279,6 +280,45 @@ module ticketland::refunable_sale_test {
     burn_for_testing(sui_coins);
     clock::destroy_for_testing(clock);
     end(scenario);
+    end(scenario_buyer);
+  }
+
+  #[test(buyer=@0xf1)]
+  #[expected_failure(abort_code = 0x0, location = ticketland::basic_sale)]
+  fun test_should_not_allow_refund_if_not_attended(buyer: address) {
+    let scenario_buyer = test_scenario::begin(buyer);
+    refundable_purchase(buyer);
+    
+    let cnt = take_from_sender<CNT>(&mut scenario_buyer);
+    let refund = take_from_sender<Refund<SUI>>(&mut scenario_buyer);
+    let attendance_config = create_config(ctx(&mut scenario_buyer));
+
+    claim_refund(cnt, &attendance_config, refund, ctx(&mut scenario_buyer));
+    // set_attended(&cnt, &mut attendance_config);
+
+    drop_config(attendance_config);
+    end(scenario_buyer);
+  }
+
+  #[test(buyer=@0xf1)]
+  fun test_should_allow_refunds(buyer: address) {
+    let scenario_buyer = test_scenario::begin(buyer);
+    refundable_purchase(buyer);
+    
+    let cnt = take_from_sender<CNT>(&mut scenario_buyer);
+    let refund = take_from_sender<Refund<SUI>>(&mut scenario_buyer);
+    let attendance_config = create_config(ctx(&mut scenario_buyer));
+
+    set_attended_for_testing(&cnt, &mut attendance_config);
+    claim_refund(cnt, &attendance_config, refund, ctx(&mut scenario_buyer));
+    next_tx(&mut scenario_buyer, buyer);
+
+    // coins are returned to the buyer
+    let refund_coins = take_from_sender<Coin<SUI>>(&mut scenario_buyer);
+    assert!(coin::value(&refund_coins) == to_base(50), 1);
+
+    burn_for_testing(refund_coins);
+    drop_config(attendance_config);
     end(scenario_buyer);
   }
 }

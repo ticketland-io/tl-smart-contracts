@@ -135,7 +135,7 @@ module ticketland::basic_sale {
 
   /// Refundable tickets allow the owners who attended the event to get a refund for the money paid to buy the ticket.
   /// cnt is passed as a owned value for access control reasons i.e. only owner of CNT can call this function.s
-  public entry fun get_refund<T>(
+  public entry fun claim_refund<T>(
     cnt: CNT,
     config: &attendance::Config,
     refund: Refund<T>,

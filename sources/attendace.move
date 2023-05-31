@@ -42,6 +42,10 @@ module ticketland::attendance {
   }
 
   public fun has_attended(cnt_id: address, config: &Config): bool {
+    if(!table::contains(&config.attendace, cnt_id)) {
+      return false
+    };
+
     *table::borrow(&config.attendace, cnt_id)
   }
 
@@ -78,5 +82,27 @@ module ticketland::attendance {
 
     ticket::set_attended(cnt);
     emit(ConfirmAttended {cnt_id})
+  }
+
+  #[test_only]
+  public fun create_config(ctx: &mut TxContext): Config {
+    Config {
+      id: object::new(ctx),
+      attendace: table::new(ctx),
+    }
+  }
+
+  #[test_only]
+  public fun set_attended_for_testing(cnt: &CNT, config: &mut Config) {
+    let cnt_id = get_cnt_id(cnt);
+    table::add(&mut config.attendace, cnt_id, true);
+  }
+
+  #[test_only]
+  public fun drop_config(config: Config) {
+    let Config {id, attendace} = config;
+
+    object::delete(id);
+    table::drop(attendace);
   }
 }
