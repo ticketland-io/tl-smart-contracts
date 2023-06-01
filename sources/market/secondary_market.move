@@ -10,8 +10,7 @@ module ticketland::secondary_market {
   use ticketland::event_registry::{Config};
   use ticketland::event::{Event, get_resale_cap_bps, get_event_id, has_ticket_type};
   use ticketland::ticket::{
-    Self, CNT, get_cnt_event_id, get_cnt_id, get_paid_amount, share_cnt,
-    get_cnt_ticket_type_id,
+    Self, CNT, get_cnt_event_id, get_cnt_id, get_paid_amount, get_cnt_ticket_type_id,
   };
 
   /// Constants
@@ -52,16 +51,15 @@ module ticketland::secondary_market {
 
   /// Allows the owner of the given ticket to list it for sale.
   /// The provided price must not exceed the allowed max resale cap value.
-  /// The CNT is an owned object which will become shared so it can be later in the purchase_listing fun
   public entry fun list<COIN>(
     event: &Event,
-    cnt: CNT,
+    cnt: &CNT,
     price: u64,
     exhange_rate: &ExchangeRate,
     ctx: &mut TxContext
   ) {
-    assert!(get_event_id(event) == get_cnt_event_id(&cnt), E_CNT_EVENT_MISMATCH);
-    let (coin_type, paid) = get_paid_amount(&cnt);
+    assert!(get_event_id(event) == get_cnt_event_id(cnt), E_CNT_EVENT_MISMATCH);
+    let (coin_type, paid) = get_paid_amount(cnt);
     assert!(is_some(&coin_type), E_ONLY_PURCHASED_TICKETS);
 
     let listing_coin_type = type_name::into_string(type_name::get<COIN>());
@@ -79,35 +77,30 @@ module ticketland::secondary_market {
 
     let listing = Listing<COIN> {
       id: object::new(ctx),
-      cnt_id: get_cnt_id(&cnt),
+      cnt_id: get_cnt_id(cnt),
       price,
       seller: sender(ctx),
     };
 
-    // The reason we share is described in the ticket module. However, sharing is important also because
-    // we want to be able to pass the CNT object into the `purchase_listing`. If the object is owned the buyer, who calls
-    // the function, won't be able to pass it.
-    share_cnt(cnt);
     share_object(listing);
   }
 
   /// Allows the onwer of the listing to cancel it
   public entry fun cancel_listing<COIN>(
-    cnt: CNT,
+    cnt: &CNT,
     listing: Listing<COIN>,
     ctx: &mut TxContext,
   ) {
     let owner = sender(ctx);
     assert!(listing.seller == owner, E_ONLY_LISTING_OWNER);
-    assert!(listing.cnt_id == get_cnt_id(&cnt), E_CNT_LISTING_MISMATCH);
+    assert!(listing.cnt_id == get_cnt_id(cnt), E_CNT_LISTING_MISMATCH);
 
-    ticket::transfer(cnt, owner);
     drop_listing(listing);
   }
 
   /// Allows anyone to purchase the listing by sending the correct amount of the given coin type.
   public entry fun purchase_listing<T>(
-    cnt: CNT,
+    cnt: &mut CNT,
     listing: Listing<T>,
     coins: &mut Coin<T>,
     config: &Config,
@@ -160,12 +153,12 @@ module ticketland::secondary_market {
   }
 
   public entry fun purchase_offer<T>(
-    cnt: CNT,
+    cnt: &mut CNT,
     offer: Offer<T>,
     config: &Config,
     ctx: &mut TxContext
   ) {
-    assert!(offer.ticket_type_id == get_cnt_ticket_type_id(&cnt), E_WRONG_TICKET_TYPE);
+    assert!(offer.ticket_type_id == get_cnt_ticket_type_id(cnt), E_WRONG_TICKET_TYPE);
     
     let seller = sender(ctx);
     let Offer {id, price, buyer, ticket_type_id: _} = offer;

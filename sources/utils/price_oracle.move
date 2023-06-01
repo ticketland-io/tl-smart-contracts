@@ -138,4 +138,10 @@ module ticketland::price_oracle {
 
     exchnage_rate
   }
+
+  #[test_only]
+  public fun drop_exchange_rate(exhange_rate: ExchangeRate) {
+    let ExchangeRate {id, inner: _} = exhange_rate;
+    object::delete(id);
+  }
 }

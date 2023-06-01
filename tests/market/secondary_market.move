@@ -1,15 +1,14 @@
 #[test_only]
 module ticketland::secondary_market_test {
     use sui::test_scenario::{
-    Self, ctx, next_tx, end, take_from_sender, return_to_sender, 
-    take_shared, return_shared,
+    Self, ctx, next_tx, end, take_shared, return_shared,
   };
   // use sui::coin::{Coin};
   use std::type_name;
   use sui::sui::SUI;
   use ticketland::usdc::{USDC};
   use ticketland::fixed_price_sale_test::{fixed_price_purchase};
-  use ticketland::price_oracle::{ExchangeRate, create_exchange_rate};
+  use ticketland::price_oracle::{ExchangeRate, create_exchange_rate, drop_exchange_rate};
   use ticketland::secondary_market::{list};
   use ticketland::ticket::{CNT};
   use ticketland::event::{Event};
@@ -39,12 +38,13 @@ module ticketland::secondary_market_test {
     fixed_price_purchase(buyer);
     let exchange_rate = setup();
 
-    let cnt = take_from_sender<CNT>(&mut scenario_buyer);
+    let cnt = take_shared<CNT>(&mut scenario_buyer);
     let event = take_shared<Event>(&mut scenario_buyer);
 
-    list<USDC>(&event, cnt, to_base(110), &exchange_rate, ctx(&mut scenario_buyer));
+    list<USDC>(&event, &cnt, to_base(110), &exchange_rate, ctx(&mut scenario_buyer));
 
-    return_to_sender(&mut scenario_buyer, exchange_rate);
+    drop_exchange_rate(exchange_rate);
+    return_shared(cnt);
     return_shared(event);
     end(scenario_buyer);
   }

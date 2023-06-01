@@ -50,19 +50,19 @@ module ticketland::free_sale_test {
       &clock,
       ctx(&mut scenario_buyer),
     );
+    clock::destroy_for_testing(clock);
     next_tx(&mut scenario_buyer, buyer);
 
-    // CNT object is created and sent to the buyer
-    let cnt = take_from_sender<CNT>(&mut scenario_buyer);
+    // A shared CNT object is created
+    let cnt = take_shared<CNT>(&mut scenario_buyer);
 
     // The available seats is reduced
     assert!(get_available_seats(&event) == 99, 1);
 
     return_shared(event);
-    return_to_sender(&mut scenario_buyer, cnt);
-    clock::destroy_for_testing(clock);
-    end(scenario);
+    return_shared(cnt);
     end(scenario_buyer);
+    end(scenario);
   }
 
   #[test(buyer=@0xf1)]

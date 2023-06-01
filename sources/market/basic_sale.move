@@ -6,8 +6,8 @@ module ticketland::basic_sale {
   use sui::transfer::{transfer, public_transfer};
   use std::type_name;
   use sui::object::{Self, UID, delete};
-  use sui::coin::{Coin, split};
-  use ticketland::ticket::{Self, CNT, get_cnt_id};
+  use sui::coin::{Self, Coin, split};
+  use ticketland::ticket::{Self, CNT, get_cnt_id, get_cnt_owner};
   use ticketland::num_utils::{u64_to_str};
   use ticketland::event::{get_event_creator};
   use ticketland::attendance::{Self, has_attended};
@@ -27,6 +27,7 @@ module ticketland::basic_sale {
 
   /// Errors
   const E_DID_NOT_ATTEND: u64 = 0;
+  const E_ONLY_OWNER: u64 = 1;
 
   // Holds the coins paid for refundable tickets
   struct Refund<phantom T> has key {
@@ -134,25 +135,22 @@ module ticketland::basic_sale {
   }
 
   /// Refundable tickets allow the owners who attended the event to get a refund for the money paid to buy the ticket.
-  /// cnt is passed as a owned value for access control reasons i.e. only owner of CNT can call this function.s
   public entry fun claim_refund<T>(
-    cnt: CNT,
+    cnt: &CNT,
     config: &attendance::Config,
     refund: Refund<T>,
     ctx: &mut TxContext,
   ) {
-    let cnt_id = get_cnt_id(&cnt);
+    let owner = sender(ctx);
+    assert!(get_cnt_owner(cnt) == owner, E_ONLY_OWNER);
+    let cnt_id = get_cnt_id(cnt);
     assert!(has_attended(cnt_id, config), E_DID_NOT_ATTEND);
     
     // destroy object
     let Refund {id, cnt_id: _, coins} = refund;
     delete(id);
 
-    let owner = sender(ctx);
     public_transfer(coins, owner);
-    
-    // return the cnt back to owner. We could alternatively pass a &mut CNT and avoid this extra step.
-    ticket::transfer(cnt, owner)
   }
 
   #[view]

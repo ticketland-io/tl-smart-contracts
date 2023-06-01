@@ -62,8 +62,8 @@ module ticketland::refunable_sale_test {
     
     next_tx(&mut scenario_buyer, buyer);
 
-    // CNT object is created and sent to the buyer
-    let cnt = take_from_sender<CNT>(&mut scenario_buyer);
+    // A shared CNT object is created
+    let cnt = take_shared<CNT>(&mut scenario_buyer);
     
     // Should wrap coins in a Refund onject and send it to the buyer
     let refund = take_from_sender<Refund<SUI>>(&mut scenario_buyer);
@@ -72,7 +72,7 @@ module ticketland::refunable_sale_test {
     assert!(amount == to_base(50), 1);
 
     return_shared(event);
-    return_to_sender(&mut scenario_buyer, cnt);
+    return_shared(cnt);
     return_to_sender(&mut scenario_buyer, refund);
     burn_for_testing(sui_coins);
     clock::destroy_for_testing(clock);
@@ -289,13 +289,13 @@ module ticketland::refunable_sale_test {
     let scenario_buyer = test_scenario::begin(buyer);
     refundable_purchase(buyer);
     
-    let cnt = take_from_sender<CNT>(&mut scenario_buyer);
+    let cnt = take_shared<CNT>(&mut scenario_buyer);
     let refund = take_from_sender<Refund<SUI>>(&mut scenario_buyer);
     let attendance_config = create_config(ctx(&mut scenario_buyer));
 
-    claim_refund(cnt, &attendance_config, refund, ctx(&mut scenario_buyer));
-    // set_attended(&cnt, &mut attendance_config);
+    claim_refund(&cnt, &attendance_config, refund, ctx(&mut scenario_buyer));
 
+    return_shared(cnt);
     drop_config(attendance_config);
     end(scenario_buyer);
   }
@@ -305,18 +305,19 @@ module ticketland::refunable_sale_test {
     let scenario_buyer = test_scenario::begin(buyer);
     refundable_purchase(buyer);
     
-    let cnt = take_from_sender<CNT>(&mut scenario_buyer);
+    let cnt = take_shared<CNT>(&mut scenario_buyer);
     let refund = take_from_sender<Refund<SUI>>(&mut scenario_buyer);
     let attendance_config = create_config(ctx(&mut scenario_buyer));
 
     set_attended_for_testing(&cnt, &mut attendance_config);
-    claim_refund(cnt, &attendance_config, refund, ctx(&mut scenario_buyer));
+    claim_refund(&cnt, &attendance_config, refund, ctx(&mut scenario_buyer));
     next_tx(&mut scenario_buyer, buyer);
 
     // coins are returned to the buyer
     let refund_coins = take_from_sender<Coin<SUI>>(&mut scenario_buyer);
     assert!(coin::value(&refund_coins) == to_base(50), 1);
 
+    return_shared(cnt);
     burn_for_testing(refund_coins);
     drop_config(attendance_config);
     end(scenario_buyer);

@@ -63,8 +63,8 @@ module ticketland::fixed_price_sale_test {
     
     next_tx(&mut scenario_buyer, buyer);
 
-    // CNT object is created and sent to the buyer
-    let cnt = take_from_sender<CNT>(&mut scenario_buyer);
+    // A shared CNT object is created
+    let cnt = take_shared<CNT>(&mut scenario_buyer);
 
     // Fees should be sent to protocol recipient 5% of 100 USDC price
     let coins = take_from_address<Coin<USDC>>(&mut scenario_buyer, @protocol_fee_address);
@@ -78,7 +78,7 @@ module ticketland::fixed_price_sale_test {
 
     drop_config(config);
     return_shared(event);
-    return_to_sender(&mut scenario_buyer, cnt);
+    return_shared(cnt);
     burn_for_testing(usdc_coins);
     clock::destroy_for_testing(clock);
     end(scenario);

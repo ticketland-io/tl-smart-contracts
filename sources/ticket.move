@@ -4,7 +4,7 @@ module ticketland::ticket {
   use std::vector;
   use std::option::{Option};
   use sui::object::{Self, UID, uid_to_address};
-  use sui::transfer::{Self, public_transfer, share_object};
+  use sui::transfer::{public_transfer, share_object};
   use sui::tx_context::{TxContext, sender};
   use std::string::{utf8, String};
   use std::ascii;
@@ -70,6 +70,8 @@ module ticketland::ticket {
   // other NftTicket attached to it.
   struct CNT has key {
     id: UID,
+    /// The owner of CNT
+    owner: address,
     /// The on-chain id of the event (as address)
     event_id: address,
     /// The CNT ticket type id (as address)
@@ -151,6 +153,11 @@ module ticketland::ticket {
   public fun get_cnt_event_id(cnt: &CNT): address {
     cnt.event_id
   }
+
+  public fun get_cnt_owner(cnt: &CNT): address {
+    cnt.owner
+  }
+
 
   public fun get_cnt_ticket_type_id(cnt: &CNT): address {
     cnt.ticket_type_id
@@ -258,6 +265,7 @@ module ticketland::ticket {
 
     let cnt = CNT {
       id,
+      owner: sender(ctx),
       event_id,
       ticket_type_id,
       name,
@@ -268,21 +276,20 @@ module ticketland::ticket {
       attached_nfts: object_bag::new(ctx),
     };
 
-    transfer::transfer(cnt, sender(ctx));
+    // There is currently a limitation in the Sui Move vm and this is the reason why the CNT is a shared
+    // rather than an owned object. Read [here](https://github.com/MystenLabs/sui/issues/12271) for more details.
+    // Our initial approach was the following but unfortunately it's not currenly possible on SUI.
+    // The CNT struct intentionally does not have the store ability because we don't want native transfer of that object.
+    // At the same time the CNT can be listed for sale. Ideally, we would wrap the CNT object in a listing object and then
+    // transfer it to the buyer upon successful trade. However, because the CNT object does not have the store ability
+    // it cannot be wrapped. To circumvent that, we can make the CNT shared when seller lists it for sale. Being shared is tricky
+    // because it can be access and modified by anyone. But because the CNT object is defined in this module, we are sure that
+    // such mutation are impossible to happen. In fact, we MUST be careful not to allow such mutation at all.
+    // THe CNT can later become owned again by calling the `transfer` of this module which is can only be called by friend modules
+    // so we don't risk any unintended behaviour.
+    share_object(cnt);
 
     cnt_id
-  }
-
-  /// The CNT struct intentionally does not have the store ability because we don't want native transfer of that object.
-  /// At the same time the CNT can be listed for sale. Ideally, we would wrap the CNT object in a listing object and then
-  /// transfer it to the buyer upon successful trade. However, because the CNT object does not have the store ability
-  /// it cannot be wrapped. To circumvent that, we can make the CNT shared when seller lists it for sale. Being shared is tricky
-  /// because it can be access and modified by anyone. But because the CNT object is defined in this module, we are sure that
-  /// such mutation are impossible to happen. In fact, we MUST be careful not to allow such mutation at all.
-  /// THe CNT can later become owned again by calling the `transfer` of this module which is can only be called by friend modules
-  /// so we don't risk any unintended behaviour.
-  public(friend) fun share_cnt(cnt: CNT) {
-    share_object(cnt)
   }
 
   /// Allows the event organizer to register new (or update existing) Ticket NFT descriptions. Any arbitraty number
@@ -433,9 +440,8 @@ module ticketland::ticket {
     cnt.attended = true;
   }
 
-  /// Used by friend modules to transfer the given CNT. CNT has not store ability
-  /// so any transfer must happen though this module.
-  public(friend) fun transfer(cnt: CNT, recipient: address) {
-    transfer::transfer(cnt, recipient);
+  /// Used by friend modules to transfer the given CNT (aplication layer) ownership
+  public(friend) fun transfer(cnt: &mut CNT, recipient: address) {
+    cnt.owner = recipient;
   }
 }
