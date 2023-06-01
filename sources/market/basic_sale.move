@@ -6,7 +6,7 @@ module ticketland::basic_sale {
   use sui::transfer::{transfer, public_transfer};
   use std::type_name;
   use sui::object::{Self, UID, delete};
-  use sui::coin::{Self, Coin, split};
+  use sui::coin::{Coin, split};
   use ticketland::ticket::{Self, CNT, get_cnt_id};
   use ticketland::num_utils::{u64_to_str};
   use ticketland::event::{get_event_creator};

@@ -25,7 +25,7 @@ module ticketland::secondary_market {
   const E_ONLY_PURCHASED_TICKETS: u64 = 4;
   const E_WRONG_TICKET_TYPE: u64 = 5;
   const E_ONLY_OFFER_OWNER: u64 = 6;
-  
+
   /// A shared object describing a listing
   /// The phantom COIN generic type indicates the coin this listing is being sold for. Note this is the
   /// type of T and not Coin<T>
