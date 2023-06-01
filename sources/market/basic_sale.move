@@ -27,7 +27,7 @@ module ticketland::basic_sale {
 
   /// Errors
   const E_DID_NOT_ATTEND: u64 = 0;
-  const E_ONLY_OWNER: u64 = 1;
+  const E_ONLY_CNT_OWNER: u64 = 1;
 
   // Holds the coins paid for refundable tickets
   struct Refund<phantom T> has key {
@@ -142,7 +142,7 @@ module ticketland::basic_sale {
     ctx: &mut TxContext,
   ) {
     let owner = sender(ctx);
-    assert!(get_cnt_owner(cnt) == owner, E_ONLY_OWNER);
+    assert!(get_cnt_owner(cnt) == owner, E_ONLY_CNT_OWNER);
     let cnt_id = get_cnt_id(cnt);
     assert!(has_attended(cnt_id, config), E_DID_NOT_ATTEND);
     
