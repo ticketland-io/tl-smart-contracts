@@ -8,6 +8,7 @@ module ticketland::secondary_market_list_test {
   use sui::sui::SUI;
   use ticketland::usdc::{USDC};
   use ticketland::fixed_price_sale_test::{fixed_price_purchase};
+  use ticketland::free_sale_test::{free_purchase};
   use ticketland::price_oracle::{ExchangeRate, create_exchange_rate, drop_exchange_rate};
   use ticketland::secondary_market::{list};
   use ticketland::ticket::{CNT};
@@ -31,10 +32,6 @@ module ticketland::secondary_market_list_test {
     end(scenario);
 
     exchange_rate
-  }
-
-  fun list_cnt() {
-    
   }
 
   #[test(buyer=@0xf1)]
@@ -80,14 +77,32 @@ module ticketland::secondary_market_list_test {
     let exchange_rate = setup();
     let cnt = take_shared<CNT>(&mut scenario_buyer);
     create_new_event(&mut scenario_buyer);
-    let wrong_event = take_shared<Event>(&mut scenario_buyer);
     next_tx(&mut scenario_buyer, buyer);
+    let wrong_event = take_shared<Event>(&mut scenario_buyer);
 
     list<USDC>(&wrong_event, &cnt, to_base(110), &exchange_rate, ctx(&mut scenario_buyer));
 
     drop_exchange_rate(exchange_rate);
     return_shared(cnt);
     return_shared(wrong_event);
+    end(scenario_buyer);
+  }
+
+  #[test(buyer=@0xf1, chunk=@0xd0d)]
+  #[expected_failure(abort_code = 0x4, location = ticketland::secondary_market)]
+  fun test_list_should_fail_if_free_sale_cnt(buyer: address) {
+    let scenario_buyer = test_scenario::begin(buyer);
+    free_purchase(buyer);
+    let exchange_rate = setup();
+    next_tx(&mut scenario_buyer, buyer);
+    let cnt = take_shared<CNT>(&mut scenario_buyer);
+    let event = take_shared<Event>(&mut scenario_buyer);
+
+    list<USDC>(&event, &cnt, to_base(110), &exchange_rate, ctx(&mut scenario_buyer));
+
+    drop_exchange_rate(exchange_rate);
+    return_shared(cnt);
+    return_shared(event);
     end(scenario_buyer);
   }
 }

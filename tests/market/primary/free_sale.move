@@ -32,7 +32,7 @@ module ticketland::free_sale_test {
     (event, tree_1)
   }
 
-  fun free_purchase(buyer: address) {
+  public fun free_purchase(buyer: address) {
     let scenario = test_scenario::begin(@admin);
     let clock = clock::create_for_testing(ctx(&mut scenario));
     let (event, tree_1) = setup(&mut scenario, &clock);
