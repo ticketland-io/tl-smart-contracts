@@ -96,12 +96,7 @@ module ticketland::price_oracle {
     if(from == to) {
       return BASIS_POINTS
     };
-
-    std::debug::print(&from);
-    std::debug::print(&to);
-    std::debug::print(&exhange_rate.inner);
-    std::debug::print(&get_composite_key(from, to));
-
+    
     *vec_map::get(&exhange_rate.inner, &get_composite_key(from, to))
   }
 
