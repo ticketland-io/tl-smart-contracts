@@ -13,6 +13,7 @@ module ticketland::secondary_market_list_test {
   use ticketland::ticket::{CNT};
   use ticketland::event::{Event};
   use ticketland::common_test::{to_base};
+  use ticketland::event_test::{create_new_event};
 
   fun setup(): ExchangeRate {
     let scenario = test_scenario::begin(@admin);
@@ -69,5 +70,24 @@ module ticketland::secondary_market_list_test {
     return_shared(event);
     end(scenario_buyer);
     end(scenario_chunk);
+  }
+
+  #[test(buyer=@0xf1, chunk=@0xd0d)]
+  #[expected_failure(abort_code = 0x0, location = ticketland::secondary_market)]
+  fun test_list_should_fail_if_wrong_event(buyer: address) {
+    let scenario_buyer = test_scenario::begin(buyer);
+    fixed_price_purchase(buyer);
+    let exchange_rate = setup();
+    let cnt = take_shared<CNT>(&mut scenario_buyer);
+    create_new_event(&mut scenario_buyer);
+    let wrong_event = take_shared<Event>(&mut scenario_buyer);
+    next_tx(&mut scenario_buyer, buyer);
+
+    list<USDC>(&wrong_event, &cnt, to_base(110), &exchange_rate, ctx(&mut scenario_buyer));
+
+    drop_exchange_rate(exchange_rate);
+    return_shared(cnt);
+    return_shared(wrong_event);
+    end(scenario_buyer);
   }
 }
