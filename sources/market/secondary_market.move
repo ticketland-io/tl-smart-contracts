@@ -38,7 +38,7 @@ module ticketland::secondary_market {
     price: u64,
     /// The seller who created this listing
     seller: address,
-    /// Check is this listing is still open
+    /// Check is this listing is still open. Closed when cancelled or purchased
     is_open: bool,
   }
 
@@ -51,6 +51,8 @@ module ticketland::secondary_market {
     buyer: address,
     /// The CNT ticket type id (as address)
     ticket_type_id: address,
+    /// Check is this offer is still open. Closed when cancelled or purchased
+    is_open: bool,
   }
 
   #[view]
@@ -133,9 +135,8 @@ module ticketland::secondary_market {
     close_listing(listing);
   }
 
-  fun drop_listing<COIN>(listing: Listing<COIN>) {
-    let Listing {id, cnt_id:_, price:_, seller:_, is_open:_} = listing;
-    object::delete(id);
+  fun close_offer<T>(offer: &mut Offer<T>) {
+    offer.is_open = false;
   }
 
   /// Allows anyone to creat an offer for a ticket of the given type
@@ -153,18 +154,20 @@ module ticketland::secondary_market {
       price,
       buyer,
       ticket_type_id,
+      is_open: true,
     };
 
     share_object(offer);
   }
 
-  public entry fun cancel_offer<T>(offer: Offer<T>, ctx: &mut TxContext) {
+  public entry fun cancel_offer<T>(offer: &mut Offer<T>, ctx: &mut TxContext) {
     let owner = sender(ctx);
-    let Offer {id, price, buyer, ticket_type_id: _} = offer;
-    assert!(buyer == owner, E_ONLY_OFFER_OWNER);
-  
-    public_transfer(price, owner);
-    object::delete(id);
+    let Offer {id:_, price, buyer, ticket_type_id:_, is_open:_} = offer;
+    assert!(*buyer == owner, E_ONLY_OFFER_OWNER);
+    let amount = value(price);
+
+    public_transfer(split(price, amount, ctx), owner);
+    close_offer(offer);
   }
 
   public entry fun purchase_offer<T>(
@@ -176,7 +179,7 @@ module ticketland::secondary_market {
     assert!(offer.ticket_type_id == get_cnt_ticket_type_id(cnt), E_WRONG_TICKET_TYPE);
     
     let seller = sender(ctx);
-    let Offer {id: _, price, buyer, ticket_type_id: _} = offer;
+    let Offer {id: _, price, buyer, ticket_type_id: _, is_open:_} = offer;
     let amount = value(price);
     let (fees, payable_amount, protocol_fee_address) = split_payable_amount<T>(price, amount, config);
 
@@ -186,5 +189,6 @@ module ticketland::secondary_market {
 
     // tranfer the Ticket to the buyer
     ticket::transfer(cnt, *buyer);
+    close_offer(offer);
   }
 }
