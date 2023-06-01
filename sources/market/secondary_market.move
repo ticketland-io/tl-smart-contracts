@@ -20,7 +20,6 @@ module ticketland::secondary_market {
   /// Errors
   const E_CNT_EVENT_MISMATCH: u64 = 0;
   const E_MAX_PRICE_VIOLATION: u64 = 1;
-  const E_CNT_LISTING_MISMATCH: u64 = 2;
   const E_ONLY_LISTING_OWNER: u64 = 3;
   const E_ONLY_PURCHASED_TICKETS: u64 = 4;
   const E_WRONG_TICKET_TYPE: u64 = 5;
@@ -105,13 +104,10 @@ module ticketland::secondary_market {
 
   /// Allows the onwer of the listing to cancel it
   public entry fun cancel_listing<COIN>(
-    cnt: &CNT,
     listing: &mut Listing<COIN>,
     ctx: &mut TxContext,
   ) {
-    let owner = sender(ctx);
-    assert!(listing.seller == owner, E_ONLY_LISTING_OWNER);
-    assert!(listing.cnt_id == get_cnt_id(cnt), E_CNT_LISTING_MISMATCH);
+    assert!(listing.seller == sender(ctx), E_ONLY_LISTING_OWNER);
     close_listing(listing);
   }
 

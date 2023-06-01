@@ -3,7 +3,6 @@ module ticketland::secondary_market_cancel_listing_test {
   use sui::test_scenario::{
     begin, ctx, next_tx, end, take_shared, return_shared,
   };
-  use ticketland::ticket::{CNT};
   use ticketland::usdc::{USDC};
   use ticketland::secondary_market_list_test::{list_cnt};
   use ticketland::secondary_market::{Listing, cancel_listing, is_listing_open};
@@ -12,11 +11,10 @@ module ticketland::secondary_market_cancel_listing_test {
   fun test_cancel_listing(buyer: address) {
     list_cnt(buyer);
     let scenario_buyer = begin(buyer);
-    let cnt = take_shared<CNT>(&mut scenario_buyer);
     let listing = take_shared<Listing<USDC>>(&mut scenario_buyer);
     assert!(is_listing_open(&listing), 1);
 
-    cancel_listing<USDC>(&cnt, &mut listing, ctx(&mut scenario_buyer));
+    cancel_listing<USDC>(&mut listing, ctx(&mut scenario_buyer));
     return_shared(listing);
     next_tx(&mut scenario_buyer, buyer);
 
@@ -24,7 +22,6 @@ module ticketland::secondary_market_cancel_listing_test {
     assert!(!is_listing_open(&listing), 1);
     return_shared(listing);
 
-    return_shared(cnt);
     end(scenario_buyer);
   }
 
@@ -33,12 +30,10 @@ module ticketland::secondary_market_cancel_listing_test {
   fun test_should_fail_if_not_listing_owner(buyer: address, chunk: address) {
     list_cnt(buyer);
     let scenario_chunk = begin(chunk);
-    let cnt = take_shared<CNT>(&mut scenario_chunk);
     let listing = take_shared<Listing<USDC>>(&mut scenario_chunk);
 
-    cancel_listing<USDC>(&cnt, &mut listing, ctx(&mut scenario_chunk));
+    cancel_listing<USDC>( &mut listing, ctx(&mut scenario_chunk));
   
-    return_shared(cnt);
     return_shared(listing);
     end(scenario_chunk);
   }
