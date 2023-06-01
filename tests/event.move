@@ -6,7 +6,7 @@ module ticketland::event_test {
   use std::type_name;
   use sui::sui::SUI;
   use sui::test_scenario::{
-    Self, Scenario, ctx, next_tx, end, take_from_sender, return_to_sender, 
+    Scenario, begin, ctx, next_tx, end, take_from_sender, return_to_sender, 
     take_shared, return_shared,
   };
   use ticketland::event::{
@@ -121,7 +121,7 @@ module ticketland::event_test {
 
   #[test]
   fun test_create_event() {
-    let scenario = test_scenario::begin(@admin);
+    let scenario = begin(@admin);
     setup(&mut scenario);
   
     // A new shared Event is created
@@ -146,7 +146,7 @@ module ticketland::event_test {
 
   #[test]
   fun test_add_ticket_types() {
-    let scenario = test_scenario::begin(@admin);
+    let scenario = begin(@admin);
     setup(&mut scenario);
 
     let organizer_cap = take_from_sender<EventOrganizerCap>(&mut scenario);
@@ -192,7 +192,7 @@ module ticketland::event_test {
 
   #[test]
   fun test_add_sale_type() {
-    let scenario = test_scenario::begin(@admin);
+    let scenario = begin(@admin);
     setup(&mut scenario);
     let organizer_cap = take_from_sender<EventOrganizerCap>(&mut scenario);
     let event = take_shared<Event>(&mut scenario);
@@ -218,7 +218,7 @@ module ticketland::event_test {
   #[test]
   #[expected_failure(abort_code = 0x4, location = ticketland::event)]
   fun test_add_sale_type_fails_when_wrong_time() {
-    let scenario = test_scenario::begin(@admin);
+    let scenario = begin(@admin);
     setup(&mut scenario);
     let organizer_cap = take_from_sender<EventOrganizerCap>(&mut scenario);
     let event = take_shared<Event>(&mut scenario);
@@ -241,7 +241,7 @@ module ticketland::event_test {
   #[test]
   #[expected_failure(abort_code = 0x3, location = ticketland::event)]
   fun test_cannot_reset_sale_type() {
-    let scenario = test_scenario::begin(@admin);
+    let scenario = begin(@admin);
     setup(&mut scenario);
     let organizer_cap = take_from_sender<EventOrganizerCap>(&mut scenario);
     let event = take_shared<Event>(&mut scenario);

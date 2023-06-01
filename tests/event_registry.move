@@ -6,7 +6,7 @@ module ticketland::event_registry_test {
   use std::hash::sha3_256;
   use sui::sui::SUI;
   use sui::test_scenario::{
-    Self, Scenario, ctx, next_tx, end, take_from_sender, return_to_sender, 
+    Scenario, begin, ctx, next_tx, end, take_from_sender, return_to_sender, 
     take_shared, return_shared,
   };
   use ticketland::usdc::{USDC, Self};
@@ -49,7 +49,7 @@ module ticketland::event_registry_test {
 
   #[test]
   fun test_update_config() {
-    let scenario = test_scenario::begin(@admin);
+    let scenario = begin(@admin);
     setup(&mut scenario);
     setup_config(&mut scenario);
 
@@ -67,7 +67,7 @@ module ticketland::event_registry_test {
 
   #[test]
   fun test_create_event() {
-    let scenario = test_scenario::begin(@admin);
+    let scenario = begin(@admin);
     setup(&mut scenario);
     setup_config(&mut scenario);
     let config = take_shared<Config>(&mut scenario);

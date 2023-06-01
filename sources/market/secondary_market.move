@@ -4,7 +4,7 @@ module ticketland::secondary_market {
   use sui::transfer::{share_object, public_transfer};
   use std::type_name;
   use std::option::{Self, is_some};
-  use sui::coin::{Coin, split, value, destroy_zero};
+  use sui::coin::{Coin, split, value};
   use ticketland::price_oracle::{ExchangeRate, exchange_value};
   use ticketland::market_utils::{split_payable_amount};
   use ticketland::event_registry::{Config};
@@ -38,6 +38,8 @@ module ticketland::secondary_market {
     price: u64,
     /// The seller who created this listing
     seller: address,
+    /// Check is this listing is still open
+    is_open: bool,
   }
 
   /// A shared object describing an offer a buyer makes to purchase a ticket
@@ -49,6 +51,11 @@ module ticketland::secondary_market {
     buyer: address,
     /// The CNT ticket type id (as address)
     ticket_type_id: address,
+  }
+
+  #[view]
+  public fun is_listing_open<COIN>(listing: &Listing<COIN>): bool {
+    listing.is_open
   }
 
   /// Allows the owner of the given ticket to list it for sale.
@@ -84,28 +91,32 @@ module ticketland::secondary_market {
       cnt_id: get_cnt_id(cnt),
       price,
       seller,
+      is_open: true,
     };
 
     share_object(listing);
   }
 
+  fun close_listing<COIN>(listing: &mut Listing<COIN>) {
+    listing.is_open = false;
+  }
+
   /// Allows the onwer of the listing to cancel it
   public entry fun cancel_listing<COIN>(
     cnt: &CNT,
-    listing: Listing<COIN>,
+    listing: &mut Listing<COIN>,
     ctx: &mut TxContext,
   ) {
     let owner = sender(ctx);
     assert!(listing.seller == owner, E_ONLY_LISTING_OWNER);
     assert!(listing.cnt_id == get_cnt_id(cnt), E_CNT_LISTING_MISMATCH);
-
-    drop_listing(listing);
+    close_listing(listing);
   }
 
   /// Allows anyone to purchase the listing by sending the correct amount of the given coin type.
   public entry fun purchase_listing<T>(
     cnt: &mut CNT,
-    listing: Listing<T>,
+    listing: &mut Listing<T>,
     coins: &mut Coin<T>,
     config: &Config,
     ctx: &mut TxContext
@@ -119,11 +130,11 @@ module ticketland::secondary_market {
 
     // tranfer the Ticket to the buyer
     ticket::transfer(cnt, buyer);
-    drop_listing(listing);
+    close_listing(listing);
   }
 
   fun drop_listing<COIN>(listing: Listing<COIN>) {
-    let Listing {id, cnt_id: _, price: _, seller: _} = listing;
+    let Listing {id, cnt_id:_, price:_, seller:_, is_open:_} = listing;
     object::delete(id);
   }
 
@@ -158,24 +169,22 @@ module ticketland::secondary_market {
 
   public entry fun purchase_offer<T>(
     cnt: &mut CNT,
-    offer: Offer<T>,
+    offer: &mut Offer<T>,
     config: &Config,
     ctx: &mut TxContext
   ) {
     assert!(offer.ticket_type_id == get_cnt_ticket_type_id(cnt), E_WRONG_TICKET_TYPE);
     
     let seller = sender(ctx);
-    let Offer {id, price, buyer, ticket_type_id: _} = offer;
-    let (fees, payable_amount, protocol_fee_address) = split_payable_amount<T>(&price, value(&price), config);
+    let Offer {id: _, price, buyer, ticket_type_id: _} = offer;
+    let amount = value(price);
+    let (fees, payable_amount, protocol_fee_address) = split_payable_amount<T>(price, amount, config);
 
     // tranfer funds to protocol and seller
-    public_transfer(split(&mut price, fees, ctx), protocol_fee_address);
-    public_transfer(split(&mut price, payable_amount, ctx), seller);
+    public_transfer(split(price, fees, ctx), protocol_fee_address);
+    public_transfer(split(price, payable_amount, ctx), seller);
 
     // tranfer the Ticket to the buyer
-    ticket::transfer(cnt, buyer);
-
-    destroy_zero(price);
-    object::delete(id);
+    ticket::transfer(cnt, *buyer);
   }
 }

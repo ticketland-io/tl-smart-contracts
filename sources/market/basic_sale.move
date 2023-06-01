@@ -73,7 +73,7 @@ module ticketland::basic_sale {
   ): (address, u64, u64) {
     let ticket_type = get_ticket_type(event, ticket_type_index);
     let coin_type = type_name::into_string(type_name::get<T>());
-    let price = get_fixed_price_amount(get_sale_type<FixedPrice<T>>(event, ticket_type_index),);
+    let price = get_fixed_price_amount(get_sale_type<FixedPrice<T>>(event, ticket_type_index));
     let (fees, payable_amount, protocol_fee_address) = split_payable_amount<T>(coins, price, config);
 
     // tranfer funds

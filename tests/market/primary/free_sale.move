@@ -5,7 +5,7 @@ module ticketland::free_sale_test {
   use ticketland::merkle_tree_test::{Tree, get_proof};
   use ticketland::ticket::{CNT};
   use sui::test_scenario::{
-    Self, Scenario, ctx, next_tx, end, take_from_sender, return_to_sender, 
+    Scenario, begin, ctx, next_tx, end, take_from_sender, return_to_sender, 
     take_shared, return_shared,
   };
   use ticketland::event_test::{create_new_event, setup_ticket_types};
@@ -33,10 +33,10 @@ module ticketland::free_sale_test {
   }
 
   public fun free_purchase(buyer: address) {
-    let scenario = test_scenario::begin(@admin);
+    let scenario = begin(@admin);
     let clock = clock::create_for_testing(ctx(&mut scenario));
     let (event, tree_1) = setup(&mut scenario, &clock);
-    let scenario_buyer = test_scenario::begin(buyer);
+    let scenario_buyer = begin(buyer);
     let proof = get_proof(&tree_1, 0);
     increment_for_testing(&mut clock, 10);
 
@@ -73,10 +73,10 @@ module ticketland::free_sale_test {
   #[test(buyer=@0xf1)]
   #[expected_failure(abort_code = 0x0, location = ticketland::primary_market)]
   fun test_should_fail_if_sale_not_open(buyer: address) {
-    let scenario = test_scenario::begin(@admin);
+    let scenario = begin(@admin);
     let clock = clock::create_for_testing(ctx(&mut scenario));
     let (event, tree_1) = setup(&mut scenario, &clock);
-    let scenario_buyer = test_scenario::begin(buyer);
+    let scenario_buyer = begin(buyer);
     let proof = get_proof(&tree_1, 0);
 
     free_sale(
@@ -99,10 +99,10 @@ module ticketland::free_sale_test {
   #[test(buyer=@0xf1)]
   #[expected_failure(abort_code = 0x0, location = ticketland::primary_market)]
   fun test_should_fail_if_sale_not_closed(buyer: address) {
-    let scenario = test_scenario::begin(@admin);
+    let scenario = begin(@admin);
     let clock = clock::create_for_testing(ctx(&mut scenario));
     let (event, tree_1) = setup(&mut scenario, &clock);
-    let scenario_buyer = test_scenario::begin(buyer);
+    let scenario_buyer = begin(buyer);
     increment_for_testing(&mut clock, 21);
     let proof = get_proof(&tree_1, 0);
 
@@ -126,10 +126,10 @@ module ticketland::free_sale_test {
   #[test(buyer=@0xf1)]
   #[expected_failure(abort_code = 0x0, location = ticketland::merkle_tree)]
   fun test_should_fail_if_wrong_mt_proof(buyer: address) {
-    let scenario = test_scenario::begin(@admin);
+    let scenario = begin(@admin);
     let clock = clock::create_for_testing(ctx(&mut scenario));
     let (event, tree_1) = setup(&mut scenario, &clock);
-    let scenario_buyer = test_scenario::begin(buyer);
+    let scenario_buyer = begin(buyer);
     increment_for_testing(&mut clock, 10);
     let proof = get_proof(&tree_1, 1); // wrong proof
 
@@ -153,10 +153,10 @@ module ticketland::free_sale_test {
   #[test(buyer=@0xf1)]
   #[expected_failure(abort_code = 0x1, location = ticketland::primary_market)]
   fun test_should_fail_if_seat_index_does_to_belong_ticket_type(buyer: address) {
-    let scenario = test_scenario::begin(@admin);
+    let scenario = begin(@admin);
     let clock = clock::create_for_testing(ctx(&mut scenario));
     let (event, tree_1) = setup(&mut scenario, &clock);
-    let scenario_buyer = test_scenario::begin(buyer);
+    let scenario_buyer = begin(buyer);
     increment_for_testing(&mut clock, 10);
     let proof = get_proof(&tree_1, 0);
 
@@ -180,10 +180,10 @@ module ticketland::free_sale_test {
   #[test(buyer=@0xf1)]
   #[expected_failure(abort_code = 0x2, location = ticketland::primary_market)]
   fun test_should_fail_if_seat_not_available(buyer: address) {
-    let scenario = test_scenario::begin(@admin);
+    let scenario = begin(@admin);
     let clock = clock::create_for_testing(ctx(&mut scenario));
     let (event, tree_1) = setup(&mut scenario, &clock);
-    let scenario_buyer = test_scenario::begin(buyer);
+    let scenario_buyer = begin(buyer);
     increment_for_testing(&mut clock, 10);
     let proof = get_proof(&tree_1, 0);
 

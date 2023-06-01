@@ -5,7 +5,7 @@ module ticketland::fixed_price_sale_test {
   use sui::coin::{Self, Coin, mint_for_testing, burn_for_testing};
   use sui::sui::SUI;
   use sui::test_scenario::{
-    Self, Scenario, ctx, next_tx, end, take_from_sender, return_to_sender, 
+    Scenario, begin, ctx, next_tx, end, take_from_sender, return_to_sender, 
     take_shared, return_shared, take_from_address,
   };
   use ticketland::merkle_tree_test::{Tree, get_proof};
@@ -39,10 +39,10 @@ module ticketland::fixed_price_sale_test {
   }
 
   public fun fixed_price_purchase(buyer: address) {
-    let scenario = test_scenario::begin(@admin);
+    let scenario = begin(@admin);
     let clock = clock::create_for_testing(ctx(&mut scenario));
     let (event, config, tree_2) = setup(&mut scenario, &clock);
-    let scenario_buyer = test_scenario::begin(buyer);
+    let scenario_buyer = begin(buyer);
     let proof = get_proof(&tree_2, 25);
     increment_for_testing(&mut clock, 10);
     let usdc_coins = mint_for_testing<USDC>(to_base(100_000), ctx(&mut scenario_buyer));
@@ -93,10 +93,10 @@ module ticketland::fixed_price_sale_test {
   #[test(buyer=@0xf1)]
   #[expected_failure(abort_code = 0x0, location = ticketland::market_utils)]
   fun test_should_fail_if_low_balance(buyer: address) {
-    let scenario = test_scenario::begin(@admin);
+    let scenario = begin(@admin);
     let clock = clock::create_for_testing(ctx(&mut scenario));
     let (event, config, tree_2) = setup(&mut scenario, &clock);
-    let scenario_buyer = test_scenario::begin(buyer);
+    let scenario_buyer = begin(buyer);
     increment_for_testing(&mut clock, 10);
     let proof = get_proof(&tree_2, 25);
     let usdc_coins = mint_for_testing<USDC>(to_base(99), ctx(&mut scenario_buyer));
@@ -126,10 +126,10 @@ module ticketland::fixed_price_sale_test {
   #[test(buyer=@0xf1)]
   #[expected_failure(abort_code = 0x2, location = sui::dynamic_field)]
   fun test_should_fail_if_wrong(buyer: address) {
-    let scenario = test_scenario::begin(@admin);
+    let scenario = begin(@admin);
     let clock = clock::create_for_testing(ctx(&mut scenario));
     let (event, config, tree_2) = setup(&mut scenario, &clock);
-    let scenario_buyer = test_scenario::begin(buyer);
+    let scenario_buyer = begin(buyer);
     increment_for_testing(&mut clock, 10);
     let proof = get_proof(&tree_2, 25);
     // Ticket type 0 has a fixed price sale type that accepts USDC not SUI
@@ -160,10 +160,10 @@ module ticketland::fixed_price_sale_test {
   #[test(buyer=@0xf1)]
   #[expected_failure(abort_code = 0x0, location = ticketland::primary_market)]
   fun test_should_fail_if_sale_not_open(buyer: address) {
-    let scenario = test_scenario::begin(@admin);
+    let scenario = begin(@admin);
     let clock = clock::create_for_testing(ctx(&mut scenario));
     let (event, config, tree_2) = setup(&mut scenario, &clock);
-    let scenario_buyer = test_scenario::begin(buyer);
+    let scenario_buyer = begin(buyer);
     let proof = get_proof(&tree_2, 25);
     let usdc_coins = mint_for_testing<USDC>(to_base(100_000), ctx(&mut scenario_buyer));
     next_tx(&mut scenario_buyer, buyer);
@@ -192,10 +192,10 @@ module ticketland::fixed_price_sale_test {
   #[test(buyer=@0xf1)]
   #[expected_failure(abort_code = 0x0, location = ticketland::primary_market)]
   fun test_should_fail_if_sale_not_closed(buyer: address) {
-    let scenario = test_scenario::begin(@admin);
+    let scenario = begin(@admin);
     let clock = clock::create_for_testing(ctx(&mut scenario));
     let (event, config, tree_2) = setup(&mut scenario, &clock);
-    let scenario_buyer = test_scenario::begin(buyer);
+    let scenario_buyer = begin(buyer);
     let proof = get_proof(&tree_2, 25);
     let usdc_coins = mint_for_testing<USDC>(to_base(100_000), ctx(&mut scenario_buyer));
     increment_for_testing(&mut clock, 21); // end of sale
@@ -225,10 +225,10 @@ module ticketland::fixed_price_sale_test {
   #[test(buyer=@0xf1)]
   #[expected_failure(abort_code = 0x1, location = ticketland::primary_market)]
   fun test_should_fail_if_seat_index_does_to_belong_ticket_type(buyer: address) {
-    let scenario = test_scenario::begin(@admin);
+    let scenario = begin(@admin);
     let clock = clock::create_for_testing(ctx(&mut scenario));
     let (event, config, tree_2) = setup(&mut scenario, &clock);
-    let scenario_buyer = test_scenario::begin(buyer);
+    let scenario_buyer = begin(buyer);
     let proof = get_proof(&tree_2, 25);
     let usdc_coins = mint_for_testing<USDC>(to_base(100_000), ctx(&mut scenario_buyer));
     increment_for_testing(&mut clock, 10); // end of sale
@@ -258,10 +258,10 @@ module ticketland::fixed_price_sale_test {
   #[test(buyer=@0xf1)]
   #[expected_failure(abort_code = 0x2, location = ticketland::primary_market)]
   fun test_should_fail_if_seat_not_available(buyer: address) {
-    let scenario = test_scenario::begin(@admin);
+    let scenario = begin(@admin);
     let clock = clock::create_for_testing(ctx(&mut scenario));
     let (event, config, tree_2) = setup(&mut scenario, &clock);
-    let scenario_buyer = test_scenario::begin(buyer);
+    let scenario_buyer = begin(buyer);
     let proof = get_proof(&tree_2, 25);
     increment_for_testing(&mut clock, 10);
     let usdc_coins = mint_for_testing<USDC>(to_base(100_000), ctx(&mut scenario_buyer));
