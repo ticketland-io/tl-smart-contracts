@@ -444,4 +444,26 @@ module ticketland::ticket {
   public(friend) fun transfer(cnt: &mut CNT, recipient: address) {
     cnt.owner = recipient;
   }
+
+  #[test_only]
+  public fun create_cnt_for_testing(
+    owner: address,
+    event_id: address,
+    ticket_type_id: address,
+    ctx: &mut TxContext
+  ): CNT {
+    use std::option::{none};
+    CNT {
+      id: object::new(ctx),
+      owner,
+      event_id,
+      ticket_type_id,
+      name: utf8(b""),
+      payment_info: PaymentInfo {coin_type: none(), paid: 0},
+      seat_index: utf8(b"0"),
+      seat_name: utf8(b"0"),
+      attended: false,
+      attached_nfts: object_bag::new(ctx),
+    }
+  }
 }

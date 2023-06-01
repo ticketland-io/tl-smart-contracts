@@ -2,13 +2,16 @@
 module ticketland::secondary_market_purchase_listing_test {
   use sui::test_scenario::{
     begin, ctx, next_tx, end, take_shared, return_shared, take_from_address,
+    new_object,
   };
   // use sui::sui::SUI;
   use sui::coin::{Coin, value, mint_for_testing, burn_for_testing};
+  use sui::object::{Self, uid_to_address};
   use ticketland::usdc::{USDC};
-  use ticketland::ticket::{CNT, get_cnt_owner};
+  use ticketland::ticket::{CNT, get_cnt_owner, create_cnt_for_testing};
   use ticketland::event_test::{create_new_config};
   use ticketland::secondary_market_list_test::{list_cnt};
+  use ticketland::event::{Event, get_event_id};
   use ticketland::secondary_market::{Listing, purchase_listing, is_listing_open};
   use ticketland::common_test::{to_base};
 
@@ -58,9 +61,41 @@ module ticketland::secondary_market_purchase_listing_test {
     end(scenario_seller);
   }
   
-  // #[test(buyer=@0xf1)]
-  // #[expected_failure(abort_code = 0x2, location = ticketland::secondary_market)]
-  // fun test_fail_if_wrong_cnt_provided(_buyer: address) {}
+  #[test(seller=@0xf1, buyer=@0xf2)]
+  #[expected_failure(abort_code = 0x2, location = ticketland::secondary_market)]
+  fun test_fail_if_wrong_cnt_provided(seller: address, buyer: address) {
+    let scenario_buyer = begin(buyer);
+    let scenario_seller = begin(seller);
+  
+    list_cnt(seller);
+
+    let event = take_shared<Event>(&mut scenario_seller);
+    let ticket_type_id = new_object(&mut scenario_seller);
+    let wrong_cnt = create_cnt_for_testing(
+      seller,
+      get_event_id(&event),
+      uid_to_address(&ticket_type_id),
+      ctx(&mut scenario_seller),
+    );
+  
+    object::delete(ticket_type_id);
+    let listing = take_shared<Listing<USDC>>(&mut scenario_buyer);
+    let config = create_new_config(&mut scenario_buyer);
+
+    let usdc_coins = mint_for_testing<USDC>(to_base(110), ctx(&mut scenario_buyer));
+    next_tx(&mut scenario_buyer, buyer);
+  
+    // create another cnt
+    purchase_listing<USDC>(&mut wrong_cnt, &mut listing, &mut usdc_coins, &config, ctx(&mut scenario_buyer));
+    
+    burn_for_testing(usdc_coins);
+    return_shared(wrong_cnt);
+    return_shared(config);
+    return_shared(listing);
+    return_shared(event);
+    end(scenario_buyer);
+    end(scenario_seller); 
+  }
 
   // #[test(buyer=@0xf1)]
   // #[expected_failure(abort_code = 0x2, location = ticketland::secondary_market)]
