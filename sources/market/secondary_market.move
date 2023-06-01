@@ -20,11 +20,14 @@ module ticketland::secondary_market {
   /// Errors
   const E_CNT_EVENT_MISMATCH: u64 = 0;
   const E_MAX_PRICE_VIOLATION: u64 = 1;
+  const E_CNT_LISTING_MISMATCH: u64 = 2;
   const E_ONLY_LISTING_OWNER: u64 = 3;
   const E_ONLY_PURCHASED_TICKETS: u64 = 4;
   const E_WRONG_TICKET_TYPE: u64 = 5;
   const E_ONLY_OFFER_OWNER: u64 = 6;
   const E_ONLY_CNT_OWNER: u64 = 7;
+  const E_LISTING_CLOSED: u64 = 8;
+  const E_OFFER_CLOSED: u64 = 9;
 
   /// A shared object describing a listing
   /// The phantom COIN generic type indicates the coin this listing is being sold for. Note this is the
@@ -119,6 +122,9 @@ module ticketland::secondary_market {
     config: &Config,
     ctx: &mut TxContext
   ) {
+    assert!(listing.is_open, E_LISTING_CLOSED);
+    assert!(listing.cnt_id == get_cnt_id(cnt), E_CNT_LISTING_MISMATCH);
+
     let buyer = sender(ctx);
     let (fees, payable_amount, protocol_fee_address) = split_payable_amount<T>(coins, listing.price, config);
     
@@ -172,8 +178,9 @@ module ticketland::secondary_market {
     config: &Config,
     ctx: &mut TxContext
   ) {
+    assert!(offer.is_open, E_OFFER_CLOSED);
     assert!(offer.ticket_type_id == get_cnt_ticket_type_id(cnt), E_WRONG_TICKET_TYPE);
-    
+
     let seller = sender(ctx);
     let Offer {id: _, price, buyer, ticket_type_id: _, is_open:_} = offer;
     let amount = value(price);

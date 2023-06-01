@@ -3,7 +3,6 @@ module ticketland::secondary_market_list_test {
   use sui::test_scenario::{
     TransactionEffects, begin, ctx, next_tx, end, take_shared, return_shared,
   };
-  // use sui::coin::{Coin};
   use std::type_name;
   use sui::sui::SUI;
   use ticketland::usdc::{USDC};
@@ -34,40 +33,40 @@ module ticketland::secondary_market_list_test {
     exchange_rate
   }
 
-  public fun list_cnt(buyer: address): TransactionEffects {
-    let scenario_buyer = begin(buyer);
-    fixed_price_purchase(buyer);
+  public fun list_cnt(seller: address): TransactionEffects {
+    let scenario_seller = begin(seller);
+    fixed_price_purchase(seller);
     let exchange_rate = setup();
-    let cnt = take_shared<CNT>(&mut scenario_buyer);
-    let event = take_shared<Event>(&mut scenario_buyer);
+    let cnt = take_shared<CNT>(&mut scenario_seller);
+    let event = take_shared<Event>(&mut scenario_seller);
 
-    list<USDC>(&event, &cnt, to_base(110), &exchange_rate, ctx(&mut scenario_buyer));
+    list<USDC>(&event, &cnt, to_base(110), &exchange_rate, ctx(&mut scenario_seller));
 
     drop_exchange_rate(exchange_rate);
     return_shared(cnt);
     return_shared(event);
-    end(scenario_buyer)
+    end(scenario_seller)
   }
 
-  #[test(buyer=@0xf1)]
-  fun test_list_cnt(buyer: address) {
-    list_cnt(buyer);
+  #[test(seller=@0xf1)]
+  fun test_list_cnt(seller: address) {
+    list_cnt(seller);
     
-    let scenario_buyer = begin(buyer);
-    let listing = take_shared<Listing<USDC>>(&mut scenario_buyer);
+    let scenario_seller = begin(seller);
+    let listing = take_shared<Listing<USDC>>(&mut scenario_seller);
 
     return_shared(listing);
-    end(scenario_buyer);
+    end(scenario_seller);
   }
 
-  #[test(buyer=@0xf1, chunk=@0xd0d)]
+  #[test(seller=@0xf1, chunk=@0xd0d)]
   #[expected_failure(abort_code = 0x7, location = ticketland::secondary_market)]
-  fun test_list_should_fail_if_not_owner(buyer: address, chunk: address) {
-    let scenario_buyer = begin(buyer);
-    fixed_price_purchase(buyer);
+  fun test_list_should_fail_if_not_owner(seller: address, chunk: address) {
+    let scenario_seller = begin(seller);
+    fixed_price_purchase(seller);
     let exchange_rate = setup();
-    let cnt = take_shared<CNT>(&mut scenario_buyer);
-    let event = take_shared<Event>(&mut scenario_buyer);
+    let cnt = take_shared<CNT>(&mut scenario_seller);
+    let event = take_shared<Event>(&mut scenario_seller);
     let scenario_chunk= begin(chunk);
 
     list<USDC>(&event, &cnt, to_base(110), &exchange_rate, ctx(&mut scenario_chunk));
@@ -75,62 +74,62 @@ module ticketland::secondary_market_list_test {
     drop_exchange_rate(exchange_rate);
     return_shared(cnt);
     return_shared(event);
-    end(scenario_buyer);
+    end(scenario_seller);
     end(scenario_chunk);
   }
 
-  #[test(buyer=@0xf1, chunk=@0xd0d)]
+  #[test(seller=@0xf1, chunk=@0xd0d)]
   #[expected_failure(abort_code = 0x0, location = ticketland::secondary_market)]
-  fun test_list_should_fail_if_wrong_event(buyer: address) {
-    let scenario_buyer = begin(buyer);
-    fixed_price_purchase(buyer);
+  fun test_list_should_fail_if_wrong_event(seller: address) {
+    let scenario_seller = begin(seller);
+    fixed_price_purchase(seller);
     let exchange_rate = setup();
-    let cnt = take_shared<CNT>(&mut scenario_buyer);
-    create_new_event(&mut scenario_buyer);
-    next_tx(&mut scenario_buyer, buyer);
-    let wrong_event = take_shared<Event>(&mut scenario_buyer);
+    let cnt = take_shared<CNT>(&mut scenario_seller);
+    create_new_event(&mut scenario_seller);
+    next_tx(&mut scenario_seller, seller);
+    let wrong_event = take_shared<Event>(&mut scenario_seller);
 
-    list<USDC>(&wrong_event, &cnt, to_base(110), &exchange_rate, ctx(&mut scenario_buyer));
+    list<USDC>(&wrong_event, &cnt, to_base(110), &exchange_rate, ctx(&mut scenario_seller));
 
     drop_exchange_rate(exchange_rate);
     return_shared(cnt);
     return_shared(wrong_event);
-    end(scenario_buyer);
+    end(scenario_seller);
   }
 
-  #[test(buyer=@0xf1, chunk=@0xd0d)]
+  #[test(seller=@0xf1, chunk=@0xd0d)]
   #[expected_failure(abort_code = 0x4, location = ticketland::secondary_market)]
-  fun test_list_should_fail_if_free_cnt(buyer: address) {
-    let scenario_buyer = begin(buyer);
-    free_purchase(buyer);
+  fun test_list_should_fail_if_free_cnt(seller: address) {
+    let scenario_seller = begin(seller);
+    free_purchase(seller);
     let exchange_rate = setup();
-    next_tx(&mut scenario_buyer, buyer);
-    let cnt = take_shared<CNT>(&mut scenario_buyer);
-    let event = take_shared<Event>(&mut scenario_buyer);
+    next_tx(&mut scenario_seller, seller);
+    let cnt = take_shared<CNT>(&mut scenario_seller);
+    let event = take_shared<Event>(&mut scenario_seller);
 
-    list<USDC>(&event, &cnt, to_base(110), &exchange_rate, ctx(&mut scenario_buyer));
+    list<USDC>(&event, &cnt, to_base(110), &exchange_rate, ctx(&mut scenario_seller));
 
     drop_exchange_rate(exchange_rate);
     return_shared(cnt);
     return_shared(event);
-    end(scenario_buyer);
+    end(scenario_seller);
   }
 
-  #[test(buyer=@0xf1, chunk=@0xd0d)]
+  #[test(seller=@0xf1, chunk=@0xd0d)]
   #[expected_failure(abort_code = 0x1, location = ticketland::secondary_market)]
-  fun test_list_should_fail_if_max_sale_violated(buyer: address) {
-    let scenario_buyer = begin(buyer);
-    fixed_price_purchase(buyer);
+  fun test_list_should_fail_if_max_sale_violated(seller: address) {
+    let scenario_seller = begin(seller);
+    fixed_price_purchase(seller);
     let exchange_rate = setup();
-    let cnt = take_shared<CNT>(&mut scenario_buyer);
-    let event = take_shared<Event>(&mut scenario_buyer);
+    let cnt = take_shared<CNT>(&mut scenario_seller);
+    let event = take_shared<Event>(&mut scenario_seller);
 
     // Purchased for 100, max_resale cap 10% thus max resale price is 110
-    list<USDC>(&event, &cnt, to_base(111), &exchange_rate, ctx(&mut scenario_buyer));
+    list<USDC>(&event, &cnt, to_base(111), &exchange_rate, ctx(&mut scenario_seller));
 
     drop_exchange_rate(exchange_rate);
     return_shared(cnt);
     return_shared(event);
-    end(scenario_buyer);
+    end(scenario_seller);
   }
 }

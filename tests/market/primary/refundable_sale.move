@@ -10,7 +10,7 @@ module ticketland::refunable_sale_test {
   };
   use ticketland::merkle_tree_test::{Tree, get_proof};
   use ticketland::usdc::{USDC};
-  use ticketland::ticket::{CNT, get_cnt_id};
+  use ticketland::ticket::{CNT, get_cnt_id, get_cnt_owner};
   use ticketland::event_test::{create_new_event, setup_ticket_types};
   use ticketland::event::{Event, EventOrganizerCap, test_init};
   use ticketland::attendance::{create_config, drop_config, set_attended_for_testing};
@@ -64,6 +64,7 @@ module ticketland::refunable_sale_test {
 
     // A shared CNT object is created
     let cnt = take_shared<CNT>(&mut scenario_buyer);
+    assert!(get_cnt_owner(&cnt) == buyer, 1);
     
     // Should wrap coins in a Refund onject and send it to the buyer
     let refund = take_from_sender<Refund<SUI>>(&mut scenario_buyer);

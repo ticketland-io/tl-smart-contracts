@@ -10,7 +10,7 @@ module ticketland::fixed_price_sale_test {
   };
   use ticketland::merkle_tree_test::{Tree, get_proof};
   use ticketland::usdc::{USDC};
-  use ticketland::ticket::{CNT};
+  use ticketland::ticket::{CNT, get_cnt_owner};
   use ticketland::event_registry::{Config, drop_config};
   use ticketland::event_test::{create_new_event, create_new_config, setup_ticket_types};
   use ticketland::event::{Event, EventOrganizerCap, test_init};
@@ -65,6 +65,7 @@ module ticketland::fixed_price_sale_test {
 
     // A shared CNT object is created
     let cnt = take_shared<CNT>(&mut scenario_buyer);
+    assert!(get_cnt_owner(&cnt) == buyer, 1);
 
     // Fees should be sent to protocol recipient 5% of 100 USDC price
     let coins = take_from_address<Coin<USDC>>(&mut scenario_buyer, @protocol_fee_address);

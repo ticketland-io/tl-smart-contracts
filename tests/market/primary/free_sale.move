@@ -3,7 +3,7 @@ module ticketland::free_sale_test {
   use sui::clock::{Self, Clock, increment_for_testing};
   use std::string::{utf8};
   use ticketland::merkle_tree_test::{Tree, get_proof};
-  use ticketland::ticket::{CNT};
+  use ticketland::ticket::{CNT, get_cnt_owner};
   use sui::test_scenario::{
     Scenario, begin, ctx, next_tx, end, take_from_sender, return_to_sender, 
     take_shared, return_shared,
@@ -55,6 +55,7 @@ module ticketland::free_sale_test {
 
     // A shared CNT object is created
     let cnt = take_shared<CNT>(&mut scenario_buyer);
+    assert!(get_cnt_owner(&cnt) == buyer, 1);
 
     // The available seats is reduced
     assert!(get_available_seats(&event) == 99, 1);
