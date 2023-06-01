@@ -120,4 +120,8 @@ module ticketland::secondary_market_purchase_listing_test {
     end(scenario_buyer);
     end(scenario_seller);
   }
+
+  // Note; testing that the wrong coins are provided is not possible because the compiler will fail. So we are
+  // protected at compile time. Listing<COIN> MUST match the Coins passed to purchase and this is enforced at compile time.
+  // In an off-chain interaction, via JS for example, this will be checked by the runtime.
 }
