@@ -155,7 +155,7 @@ module ticketland::event_test {
     let root_1 = *root(&tree);
     let root_2 = *root(&create_tree(100, 60, 99));
 
-    add_ticket_types(
+    let ticket_type_addresses = add_ticket_types(
       vector[utf8(b"type1"), utf8(b"type2")],
       vector[root_1, root_2],
       vector[60, 40],
@@ -175,6 +175,11 @@ module ticketland::event_test {
     assert!(*get_ticket_type_mt_root(ticket_type) == root_1, 1);
     assert!(has_ticket_type(&event, &get_ticket_type_id(ticket_type)), 1);
     assert!(start == 0 && end == 10, 1);
+    assert!(
+      &get_ticket_type_id(ticket_type) ==
+      std::vector::borrow(&ticket_type_addresses, 0),
+      1
+     );
 
     // ticket type 2
     let ticket_type = get_ticket_type(&event, 1);
@@ -184,6 +189,11 @@ module ticketland::event_test {
     assert!(*get_ticket_type_mt_root(ticket_type) == root_2, 1);
     assert!(has_ticket_type(&event, &get_ticket_type_id(ticket_type)), 1);
     assert!(start == 0 && end == 10, 1);
+    assert!(
+      &get_ticket_type_id(ticket_type) ==
+      std::vector::borrow(&ticket_type_addresses, 1),
+      1
+     );
 
     return_to_sender(&mut scenario, organizer_cap);
     return_shared(event);
