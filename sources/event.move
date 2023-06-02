@@ -351,7 +351,7 @@ module ticketland::event {
   ): vector<address> {
     assert!(vector::length(&event.ticket_types) == 0, E_TICKET_TYPE_SET);
 
-    let ticket_type_ids = vector<address>[];
+    let ticket_type_addresses = vector<address>[];
     let i = 0;
     let len = vector::length(&names);
 
@@ -372,7 +372,7 @@ module ticketland::event {
       let n_tickets = *vector::borrow(&n_tickets_list, i);
       let id = object::new(ctx);
 
-      vector::push_back(&mut ticket_type_ids, object::uid_to_address(&id));
+      vector::push_back(&mut ticket_type_addresses, object::uid_to_address(&id));
       vector::push_back(&mut event.ticket_types, TicketType {
         id,
         name,
@@ -386,7 +386,7 @@ module ticketland::event {
       i = i + 1;
     };
 
-    ticket_type_ids
+    ticket_type_addresses
   }
 
   // We're not allowed to change the ticket type once it's set
