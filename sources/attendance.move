@@ -20,7 +20,7 @@ module ticketland::attendance {
   struct Config has key {
     id: UID,
     /// cnt id (as address) => attended the event?
-    attendace: Table<address, bool>,
+    attendance: Table<address, bool>,
   }
 
   // Events
@@ -35,18 +35,18 @@ module ticketland::attendance {
   fun init(ctx: &mut TxContext) {
     let attendance = Config {
       id: object::new(ctx),
-      attendace: table::new(ctx),
+      attendance: table::new(ctx),
     };
 
     share_object(attendance);
   }
 
   public fun has_attended(cnt_id: address, config: &Config): bool {
-    if(!table::contains(&config.attendace, cnt_id)) {
+    if(!table::contains(&config.attendance, cnt_id)) {
       return false
     };
 
-    *table::borrow(&config.attendace, cnt_id)
+    *table::borrow(&config.attendance, cnt_id)
   }
 
   /// A function that is called by the event organizer and transfers a new operator cap to the given address
@@ -69,7 +69,7 @@ module ticketland::attendance {
     assert!(get_cnt_event_id(cnt) == cap.event_id, E_UNAUTHORIZED);
     
     let cnt_id = get_cnt_id(cnt);
-    table::add(&mut config.attendace, cnt_id, true);
+    table::add(&mut config.attendance, cnt_id, true);
 
     emit(SetAttended {cnt_id});
   }
@@ -88,21 +88,21 @@ module ticketland::attendance {
   public fun create_config(ctx: &mut TxContext): Config {
     Config {
       id: object::new(ctx),
-      attendace: table::new(ctx),
+      attendance: table::new(ctx),
     }
   }
 
   #[test_only]
   public fun set_attended_for_testing(cnt: &CNT, config: &mut Config) {
     let cnt_id = get_cnt_id(cnt);
-    table::add(&mut config.attendace, cnt_id, true);
+    table::add(&mut config.attendance, cnt_id, true);
   }
 
   #[test_only]
   public fun drop_config(config: Config) {
-    let Config {id, attendace} = config;
+    let Config {id, attendance} = config;
 
     object::delete(id);
-    table::drop(attendace);
+    table::drop(attendance);
   }
 }
