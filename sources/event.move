@@ -338,7 +338,7 @@ module ticketland::event {
   }
 
   /// Allows the bearer of the organizer cap to add the given ticket types to the event. It can only be called once per event
-  public entry fun add_ticket_types(
+  public fun add_ticket_types(
     names: vector<String>,
     mt_roots: vector<vector<u8>>,
     n_tickets_list: vector<u32>,
