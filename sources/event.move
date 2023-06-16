@@ -338,7 +338,7 @@ module ticketland::event {
   }
 
   /// Allows the bearer of the organizer cap to add the given ticket types to the event. It can only be called once per event
-  public entry fun add_ticket_types(
+  public fun add_ticket_types(
     names: vector<String>,
     mt_roots: vector<vector<u8>>,
     n_tickets_list: vector<u32>,
@@ -348,9 +348,10 @@ module ticketland::event {
     event: &mut Event,
     _cap: &EventOrganizerCap,
     ctx: &mut TxContext
-  ) {
+  ): vector<address> {
     assert!(vector::length(&event.ticket_types) == 0, E_TICKET_TYPE_SET);
 
+    let ticket_type_addresses = vector<address>[];
     let i = 0;
     let len = vector::length(&names);
 
@@ -369,9 +370,11 @@ module ticketland::event {
 
       let name = *vector::borrow(&names, i);
       let n_tickets = *vector::borrow(&n_tickets_list, i);
+      let id = object::new(ctx);
 
+      vector::push_back(&mut ticket_type_addresses, object::uid_to_address(&id));
       vector::push_back(&mut event.ticket_types, TicketType {
-        id: object::new(ctx),
+        id,
         name,
         mt_root,
         n_tickets,
@@ -382,6 +385,8 @@ module ticketland::event {
 
       i = i + 1;
     };
+
+    ticket_type_addresses
   }
 
   // We're not allowed to change the ticket type once it's set
