@@ -20,6 +20,7 @@ module ticketland::collection_utils {
     let len = min(vector::length(a), vector::length(b));
     let i = 0;
 
+    // TODO: what if length is not the same
     while(i < len){
       if(*vector::borrow(a, i) > *vector::borrow(b, i)) {
         return BIGGER
