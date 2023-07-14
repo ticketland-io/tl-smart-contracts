@@ -1,5 +1,6 @@
 module ticketland::primary_market {
   use std::vector;
+  use std::hash::sha3_256;
   use sui::clock::{Self, Clock};
   use sui::coin::{Coin};
   use sui::tx_context::{TxContext, sender};
@@ -37,7 +38,7 @@ module ticketland::primary_market {
     vector::append(&mut p1, p2);
     vector::append(&mut p1, *p3);
 
-    p1
+    sha3_256(p1)
   }
 
   fun pre_purchase(
