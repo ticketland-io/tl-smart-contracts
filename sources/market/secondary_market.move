@@ -178,10 +178,11 @@ module ticketland::secondary_market {
     config: &Config,
     ctx: &mut TxContext
   ) {
+    let seller = sender(ctx);
+    assert!(get_cnt_owner(cnt) == seller, E_ONLY_CNT_OWNER);
     assert!(offer.is_open, E_OFFER_CLOSED);
     assert!(offer.ticket_type_id == get_cnt_ticket_type_id(cnt), E_WRONG_TICKET_TYPE);
 
-    let seller = sender(ctx);
     let Offer {id: _, price, buyer, ticket_type_id: _, is_open:_} = offer;
     let amount = value(price);
     let (fees, payable_amount, protocol_fee_address) = split_payable_amount<T>(price, amount, config);

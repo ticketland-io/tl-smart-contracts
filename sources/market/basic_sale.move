@@ -6,19 +6,22 @@ module ticketland::basic_sale {
   use sui::transfer::{transfer, public_transfer};
   use std::type_name;
   use sui::object::{Self, UID, delete};
-  use sui::coin::{Self, Coin, split};
+  use sui::coin::{Coin, split};
   use ticketland::ticket::{Self, CNT, get_cnt_id, get_cnt_owner};
   use ticketland::num_utils::{u64_to_str};
   use ticketland::event::{get_event_creator};
   use ticketland::attendance::{Self, has_attended};
   use ticketland::market_utils::{has_enough_balance, split_payable_amount};
-  use ticketland::event_registry::{Config};
+  use ticketland::event_registry::Config;
   use ticketland::sale_type::{
     FixedPrice, Refundable, get_fixed_price_amount, get_refundable_price_amount
   };
   use ticketland::event::{
     Event, get_ticket_type, get_event_id, get_ticket_type_id, get_sale_type,
   };
+
+  #[test_only]
+  use sui::coin::{Self};
 
   friend ticketland::primary_market;
 
@@ -57,6 +60,7 @@ module ticketland::basic_sale {
       seat_name,
       none(),
       paid,
+      sender(ctx),
       ctx,
     )
   }
@@ -88,10 +92,37 @@ module ticketland::basic_sale {
       seat_name,
       some(coin_type),
       price,
+      sender(ctx),
       ctx,
     );
 
     (cnt_id, price, fees)
+  }
+
+  public(friend) entry fun fixed_price_operator(
+    event: &Event,
+    ticket_type_index: u64,
+    ticket_name: String,
+    seat_index: u64,
+    seat_name: String,
+    buyer: address,
+    ctx: &mut TxContext
+  ): address {
+    let ticket_type = get_ticket_type(event, ticket_type_index);
+
+    let cnt_id = ticket::mint_cnt(
+      get_event_id(event),
+      get_ticket_type_id(ticket_type),
+      ticket_name,
+      u64_to_str(seat_index),
+      seat_name,
+      none(),
+      0,
+      buyer,
+      ctx,
+    );
+
+    cnt_id
   }
 
   public(friend) entry fun refundable<T>(
@@ -119,6 +150,7 @@ module ticketland::basic_sale {
       seat_name,
       some(coin_type),
       price,
+      sender(ctx),
       ctx,
     );
 
