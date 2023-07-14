@@ -258,6 +258,7 @@ module ticketland::ticket {
     seat_name: String,
     coin_type: Option<ascii::String>,
     paid: u64,
+    owner: address,
     ctx: &mut TxContext,
   ): address {
     let id = object::new(ctx);
@@ -265,7 +266,7 @@ module ticketland::ticket {
 
     let cnt = CNT {
       id,
-      owner: sender(ctx),
+      owner,
       event_id,
       ticket_type_id,
       name,

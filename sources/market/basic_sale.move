@@ -57,6 +57,7 @@ module ticketland::basic_sale {
       seat_name,
       none(),
       paid,
+      sender(ctx),
       ctx,
     )
   }
@@ -88,6 +89,7 @@ module ticketland::basic_sale {
       seat_name,
       some(coin_type),
       price,
+      sender(ctx),
       ctx,
     );
 
@@ -100,6 +102,7 @@ module ticketland::basic_sale {
     ticket_name: String,
     seat_index: u64,
     seat_name: String,
+    buyer: address,
     ctx: &mut TxContext
   ): address {
     let ticket_type = get_ticket_type(event, ticket_type_index);
@@ -112,6 +115,7 @@ module ticketland::basic_sale {
       seat_name,
       none(),
       0,
+      buyer,
       ctx,
     );
 
@@ -143,6 +147,7 @@ module ticketland::basic_sale {
       seat_name,
       some(coin_type),
       price,
+      sender(ctx),
       ctx,
     );
 

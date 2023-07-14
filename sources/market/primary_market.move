@@ -166,6 +166,7 @@ module ticketland::primary_market {
       ticket_name,
       seat_index,
       seat_name,
+      buyer,
       ctx,
     );
     post_purchase(event, seat_index);
