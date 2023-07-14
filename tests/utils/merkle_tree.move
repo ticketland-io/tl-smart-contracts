@@ -115,9 +115,9 @@ module ticketland::merkle_tree_test {
         string::append(&mut seat_index, utf8(b"."));
         string::append(&mut seat_index, seat_name);
 
-        vector::push_back(&mut leaves, *bytes(&seat_index));
+        vector::push_back(&mut leaves, sha3_256(*bytes(&seat_index)));
       } else {
-        vector::push_back(&mut leaves, b"NULL");
+        vector::push_back(&mut leaves, sha3_256(b"NULL"));
       };
 
       i = i + 1;
