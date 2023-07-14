@@ -5,6 +5,8 @@ module ticketland::primary_market {
   use sui::tx_context::{TxContext, sender};
   use std::string::{Self, String, utf8};
   use sui::event::{emit};
+  use sui::object::{Self, UID};
+  use sui::transfer::transfer;
   use ticketland::bitmap;
   use ticketland::merkle_tree;
   use ticketland::num_utils::{u64_to_str};
@@ -14,6 +16,9 @@ module ticketland::primary_market {
     Event, get_ticket_type, get_ticket_type_sale_time, get_seat_range, get_seats,
     get_ticket_type_mt_root, update_seats, increment_tickets_sold,
   };
+
+  /// Capability allowing the bearer to execute operator related tasks
+  struct OperatorCap has key {id: UID}
 
   /// Erros
   const E_SALE_CLOSED: u64 = 0;
@@ -27,6 +32,15 @@ module ticketland::primary_market {
     fees: u64,
     buyer: address,
     sale_type: String,
+  }
+
+  /// Module initializer to be executed when this module is published by the the Sui runtime
+  fun init (ctx: &mut TxContext) {
+    let operator_cap = OperatorCap {
+      id: object::new(ctx),
+    };
+
+    transfer(operator_cap, sender(ctx));
   }
 
   fun create_seat_leaf(seat_index: u64, seat_name: String): vector<u8> {
@@ -130,6 +144,38 @@ module ticketland::primary_market {
       fees,
       buyer,
       sale_type: utf8(b"fixed_price"),
+    });
+  }
+
+  public entry fun fixed_price_operator(
+    _op_cap: &OperatorCap,
+    buyer: address,
+    event: &mut Event,
+    ticket_type_index: u64,
+    ticket_name: String,
+    seat_index: u64,
+    seat_name: String,
+    proof: vector<vector<u8>>,
+    clock: &Clock,
+    ctx: &mut TxContext
+  ) {
+    pre_purchase(event, ticket_type_index, seat_index, seat_name, proof, clock);
+    let cnt_id = basic_sale::fixed_price_operator(
+      event,
+      ticket_type_index,
+      ticket_name,
+      seat_index,
+      seat_name,
+      ctx,
+    );
+    post_purchase(event, seat_index);
+
+    emit(TicketPurchased {
+      cnt_id,
+      price: 0,
+      fees: 0,
+      buyer,
+      sale_type: utf8(b"fixed_price_operator"),
     });
   }
 

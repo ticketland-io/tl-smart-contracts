@@ -12,7 +12,7 @@ module ticketland::basic_sale {
   use ticketland::event::{get_event_creator};
   use ticketland::attendance::{Self, has_attended};
   use ticketland::market_utils::{has_enough_balance, split_payable_amount};
-  use ticketland::event_registry::{Config};
+  use ticketland::event_registry::Config;
   use ticketland::sale_type::{
     FixedPrice, Refundable, get_fixed_price_amount, get_refundable_price_amount
   };
@@ -92,6 +92,30 @@ module ticketland::basic_sale {
     );
 
     (cnt_id, price, fees)
+  }
+
+  public(friend) entry fun fixed_price_operator(
+    event: &Event,
+    ticket_type_index: u64,
+    ticket_name: String,
+    seat_index: u64,
+    seat_name: String,
+    ctx: &mut TxContext
+  ): address {
+    let ticket_type = get_ticket_type(event, ticket_type_index);
+
+    let cnt_id = ticket::mint_cnt(
+      get_event_id(event),
+      get_ticket_type_id(ticket_type),
+      ticket_name,
+      u64_to_str(seat_index),
+      seat_name,
+      none(),
+      0,
+      ctx,
+    );
+
+    cnt_id
   }
 
   public(friend) entry fun refundable<T>(
