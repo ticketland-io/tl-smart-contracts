@@ -99,7 +99,7 @@ module ticketland::basic_sale {
     (cnt_id, price, fees)
   }
 
-  public(friend) entry fun fixed_price_operator(
+  public(friend) entry fun fixed_price_operator<T>(
     event: &Event,
     ticket_type_index: u64,
     ticket_name: String,
@@ -109,6 +109,8 @@ module ticketland::basic_sale {
     ctx: &mut TxContext
   ): address {
     let ticket_type = get_ticket_type(event, ticket_type_index);
+    let coin_type = type_name::into_string(type_name::get<T>());
+    let price = get_fixed_price_amount(get_sale_type<FixedPrice<T>>(event, ticket_type_index));
 
     let cnt_id = ticket::mint_cnt(
       get_event_id(event),
@@ -116,8 +118,8 @@ module ticketland::basic_sale {
       ticket_name,
       u64_to_str(seat_index),
       seat_name,
-      none(),
-      0,
+      some(coin_type),
+      price,
       buyer,
       ctx,
     );

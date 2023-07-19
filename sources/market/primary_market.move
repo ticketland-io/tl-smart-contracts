@@ -148,7 +148,7 @@ module ticketland::primary_market {
     });
   }
 
-  public entry fun fixed_price_operator(
+  public entry fun fixed_price_operator<T>(
     _op_cap: &OperatorCap,
     buyer: address,
     event: &mut Event,
@@ -161,7 +161,7 @@ module ticketland::primary_market {
     ctx: &mut TxContext
   ) {
     pre_purchase(event, ticket_type_index, seat_index, seat_name, proof, clock);
-    let cnt_id = basic_sale::fixed_price_operator(
+    let cnt_id = basic_sale::fixed_price_operator<T>(
       event,
       ticket_type_index,
       ticket_name,
